@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Prototyper</title>
+<!--
+  Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
+  Källfil: prototyp-publicerare/src.html. Byggs till index.html (med inbäddad logga) av bygg.py,
+  och index.html laddas upp en gång till repots rot. Allt körs i webbläsaren; GitHub-nyckeln sparas
+  bara i den här webbläsaren (localStorage).
+-->
+<style>
+@font-face{font-family:"Source Sans Pro";font-weight:400;font-display:swap;src:local("Source Sans Pro"),url("https://idun.nltg.com/assets/fonts/source-sans-pro-400.woff2") format("woff2")}
+@font-face{font-family:"Source Sans Pro";font-weight:700;font-display:swap;src:local("Source Sans Pro Bold"),url("https://idun.nltg.com/assets/fonts/source-sans-pro-700.woff2") format("woff2")}
+@font-face{font-family:"Thomas Headline";font-weight:700;font-display:swap;src:url("https://idun.nltg.com/assets/fonts/thomas-headline-700.woff2") format("woff2")}
+:root{
+  --bg:#e9e6e1; --surface:#fff; --text:#202020; --subtle:#6b6b6b; --line:#d3cec6; --cta:#ea5c0b; --cta-press:#c94d06;
+  --ok:#2e7d4f; --err:#b3261e; --focus:#4c7f81; --radius:10px;
+  --head:"Thomas Headline","Source Sans Pro",system-ui,sans-serif; --body:"Source Sans Pro",-apple-system,system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.45 var(--body);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:32px 16px 80px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+header img{width:44px}
+header h1{margin:0;flex:1;font:700 28px/1.1 var(--head)}
+.link{background:none;border:0;padding:0;text-decoration:underline;color:var(--subtle);font-size:15px}
+h2{margin:0 0 6px;font:700 20px/1.2 var(--head)}
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--subtle)}
+.small{font-size:14px}
+.btn{height:44px;padding:0 20px;border-radius:999px;border:2px solid var(--text);background:none;font:700 16px/1 var(--head);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn.primary{background:var(--cta);border-color:var(--cta);color:#fff}
+.btn.primary:hover{background:var(--cta-press);border-color:var(--cta-press)}
+.btn.small{height:36px;padding:0 14px;font-size:14px;border-width:1.5px}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible,.link:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label{display:block;font-weight:700;margin-bottom:4px}
+input[type=text],input[type=password],input[type=url]{width:100%;height:46px;border:1px solid #8f8f8f;border-radius:6px;padding:0 12px;background:#fff;font-size:17px}
+.hint{font-size:14px;color:var(--subtle);margin-top:4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>input{flex:1;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+ol.steps{margin:0;padding-left:20px}
+ol.steps li{margin-bottom:10px}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;padding:1px 5px;border-radius:4px}
+
+/* Lista över prototyper */
+.list{display:flex;flex-direction:column;gap:12px}
+.proj{display:flex;flex-direction:column;gap:10px}
+.proj .t{font:700 19px/1.2 var(--head)}
+.proj .u{font-size:14px;color:var(--subtle);word-break:break-all}
+.proj .acts{display:flex;gap:8px;flex-wrap:wrap}
+.empty{text-align:center;padding:36px 20px}
+
+/* Publicera */
+.drop{border:2px dashed #a9a39a;border-radius:var(--radius);padding:28px 16px;text-align:center;background:#f7f5f1;transition:background .15s,border-color .15s}
+.drop.over{background:#fff3ea;border-color:var(--cta)}
+.drop b{display:block;font:700 18px/1.2 var(--head);margin-bottom:6px}
+.picked{display:flex;flex-direction:column;gap:4px;font-size:15px}
+.picked .ok{color:var(--ok)}
+.picked .warn{color:#8a5a00}
+.progress{display:flex;flex-direction:column;gap:6px;font-size:15px}
+.progress div{display:flex;gap:8px;align-items:center;color:var(--subtle)}
+.progress div.on{color:var(--text);font-weight:700}
+.progress div.done{color:var(--ok)}
+.progress div::before{content:"";width:10px;height:10px;border-radius:50%;border:2px solid currentColor;flex:none}
+.progress div.done::before{background:currentColor}
+.progress div.on::before{border-color:var(--cta);animation:pp-pulse 1s infinite}
+@keyframes pp-pulse{50%{opacity:.3}}
+.result{background:#eef6f0;border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.result .u{font:700 17px/1.3 var(--body);word-break:break-all}
+.err{color:var(--err);font-size:15px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px);opacity:0;background:#202020;color:#fff;padding:10px 16px;border-radius:8px;font-size:15px;transition:.2s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+@media (max-width:520px){.btn{padding:0 14px}.wrap{padding-top:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="data:image/png;base64,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" alt="Ving">
+    <h1>Prototyper</h1>
+    <button class="link" id="to-settings" hidden>Inställningar</button>
+  </header>
+
+  <!-- 1. Första gången: koppla till GitHub -->
+  <section id="v-setup" class="card stack" hidden>
+    <h2>Koppla appen till GitHub (görs en gång)</h2>
+    <p class="muted" style="margin:0">Appen behöver en nyckel för att få lägga upp prototyper i ditt repo <b class="js-repo"></b>. Nyckeln sparas bara i den här webbläsaren.</p>
+    <ol class="steps">
+      <li><a id="tok-link" target="_blank" rel="noopener">Öppna sidan för nya nycklar på GitHub</a> (öppnas i en ny flik).</li>
+      <li>Skriv ett namn, t.ex. <code>Prototyper</code>, och välj hur länge den ska gälla (t.ex. ett år).</li>
+      <li>Under <b>Repository access</b>: välj <b>Only select repositories</b> och välj <b class="js-repo"></b>.</li>
+      <li>Under <b>Permissions → Repository permissions</b>: sätt <b>Contents</b> till <b>Read and write</b> och <b>Pages</b> till <b>Read and write</b>.</li>
+      <li>Klicka på <b>Generate token</b>, kopiera nyckeln (börjar med <code>github_pat_</code>) och klistra in den här:</li>
+    </ol>
+    <div>
+      <label for="tok">GitHub-nyckel</label>
+      <div class="row"><input type="password" id="tok" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn primary" id="tok-save">Spara</button></div>
+      <div class="err" id="tok-err" role="alert"></div>
+    </div>
+    <details class="small muted">
+      <summary>Annat repo?</summary>
+      <div class="stack" style="margin-top:10px">
+        <div><label for="cfg-owner">GitHub-konto</label><input type="text" id="cfg-owner" spellcheck="false"></div>
+        <div><label for="cfg-repo">Repo</label><input type="text" id="cfg-repo" spellcheck="false"></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- 2. Listan -->
+  <section id="v-list" hidden>
+    <div class="top">
+      <h2 style="margin:0">Publicerade prototyper</h2>
+      <button class="btn primary" id="new">Publicera ny prototyp</button>
+    </div>
+    <div class="list" id="list"><div class="card muted">Hämtar …</div></div>
+  </section>
+
+  <!-- 3. Publicera -->
+  <section id="v-pub" class="card stack" hidden>
+    <div class="top" style="margin:0">
+      <h2 style="margin:0" id="pub-h">Publicera ny prototyp</h2>
+      <button class="link" id="pub-back">Tillbaka</button>
+    </div>
+
+    <div class="drop" id="drop" tabindex="0">
+      <b>Dra in prototypens mapp här</b>
+      <span class="muted">eller en enda html-fil</span>
+      <div class="row" style="justify-content:center;margin-top:14px">
+        <button class="btn small" id="pick-dir">Välj mapp …</button>
+        <button class="btn small" id="pick-file">Välj html-fil …</button>
+      </div>
+      <input type="file" id="in-dir" webkitdirectory hidden>
+      <input type="file" id="in-file" accept=".html,.htm" hidden>
+    </div>
+    <div class="picked" id="picked" hidden></div>
+
+    <div id="fields" class="stack" hidden>
+      <div><label for="f-name">Namn</label><input type="text" id="f-name" autocomplete="off">
+        <div class="hint">Visas på sidan där man skriver lösenordet.</div></div>
+      <div><label for="f-slug">Adress</label><input type="text" id="f-slug" autocomplete="off" spellcheck="false">
+        <div class="hint">Länken blir <b id="f-url"></b></div>
+        <div class="hint" id="f-exists" hidden>Den här adressen finns redan. Publicerar du ersätts den gamla versionen, länken är densamma.</div></div>
+      <div><label for="f-pw">Lösenord</label>
+        <div class="row"><input type="text" id="f-pw" autocomplete="off" spellcheck="false"><button class="btn small" id="f-newpw">Nytt förslag</button></div>
+        <div class="hint" id="f-pwhint">Den som öppnar länken måste skriva lösenordet. Utan det går prototypen inte att läsa.</div></div>
+      <div><button class="btn primary" id="publish">Publicera</button></div>
+    </div>
+
+    <div class="progress" id="progress" hidden></div>
+    <div class="err" id="pub-err" role="alert"></div>
+    <div class="result" id="result" hidden></div>
+  </section>
+
+  <!-- 4. Inställningar -->
+  <section id="v-settings" class="card stack" hidden>
+    <div class="top" style="margin:0"><h2 style="margin:0">Inställningar</h2><button class="link" id="set-back">Tillbaka</button></div>
+    <p style="margin:0">Kopplad till <b class="js-repo"></b>.</p>
+    <p class="muted small" style="margin:0">GitHub-nyckeln och lösenorden du har valt sparas bara i den här webbläsaren, på den här datorn.</p>
+    <div class="row"><button class="btn small" id="set-forget">Koppla från (glöm nyckeln)</button></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const store = {
+  get(k){ try{ return localStorage.getItem("pp-"+k); }catch(e){ return null; } },
+  set(k,v){ try{ v==null ? localStorage.removeItem("pp-"+k) : localStorage.setItem("pp-"+k,v); }catch(e){} },
+};
+let toastT; function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),2200); }
+async function copy(text, what){ try{ await navigator.clipboard.writeText(text); toast(what+" är kopierad"); }catch(e){ prompt("Kopiera:", text); } }
+
+/* ===== Repo: hämtas från adressen om appen ligger på <konto>.github.io/<repo>/, annars från inställningarna ===== */
+const CFG = (() => {
+  const host = location.hostname.match(/^([\w-]+)\.github\.io$/);
+  const seg = location.pathname.split("/").filter(Boolean)[0];
+  return { owner: store.get("owner") || (host && host[1]) || "dstridsberg-cpu", repo: store.get("repo") || (host && seg) || "nltg", branch: "main" };
+})();
+const siteUrl = slug => `https://${CFG.owner}.github.io/${CFG.repo}/${slug}/`;
+const repoTxt = () => `${CFG.owner}/${CFG.repo}`;
+
+/* ===== GitHub API ===== */
+async function gh(path, opt={}){
+  const r = await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}${path}`, {
+    ...opt, headers:{ Authorization:`Bearer ${store.get("token")}`, Accept:"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28", ...(opt.body?{"Content-Type":"application/json"}:{}) } });
+  if(r.status===204) return null;
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(j.message||("HTTP "+r.status)); e.status=r.status; throw e; }
+  return j;
+}
+const ghErr = e => e.status===401 ? "GitHub-nyckeln fungerar inte längre (fel eller utgången). Skapa en ny under Inställningar."
+  : e.status===403 || e.status===404 ? `Nyckeln saknar behörighet till ${repoTxt()}. Kontrollera att repot är valt och att Contents och Pages har Read and write.`
+  : e.message==="Failed to fetch" ? "Kunde inte nå GitHub. Är du uppkopplad?" : "GitHub svarade: "+e.message;
+
+/* Projekt = mappar i repots rot som har en index.html */
+let TREE = [];
+async function loadTree(){
+  const t = await gh(`/git/trees/${CFG.branch}?recursive=1`).catch(e=>{ if(e.status===404||e.status===409) return {tree:[]}; throw e; });
+  TREE = (t.tree||[]).filter(x=>/^[^/]+\/index\.html$/.test(x.path)).map(x=>({slug:x.path.split("/")[0], sha:x.sha}));
+  return TREE;
+}
+
+/* ===== Vyer ===== */
+function view(id){ ["setup","list","pub","settings"].forEach(v=>$("#v-"+v).hidden = v!==id); $("#to-settings").hidden = id==="setup"||id==="settings"; window.scrollTo(0,0); }
+$$(".js-repo").forEach(el=>el.textContent=repoTxt());
+$("#cfg-owner").value=CFG.owner; $("#cfg-repo").value=CFG.repo;
+$("#tok-link").href = "https://github.com/settings/personal-access-tokens/new";
+
+/* --- Koppla till GitHub --- */
+$("#tok-save").onclick = async () => {
+  const tok=$("#tok").value.trim(), err=$("#tok-err"); err.textContent="";
+  const o=$("#cfg-owner").value.trim(), r=$("#cfg-repo").value.trim();
+  if(o&&r&&(o!==CFG.owner||r!==CFG.repo)){ store.set("owner",o); store.set("repo",r); CFG.owner=o; CFG.repo=r; $$(".js-repo").forEach(el=>el.textContent=repoTxt()); }
+  if(!tok){ err.textContent="Klistra in nyckeln först."; return; }
+  store.set("token",tok); $("#tok-save").disabled=true;
+  try{ await gh(""); $("#tok").value=""; toast("Klart, appen är kopplad"); showList(); }
+  catch(e){ store.set("token",null); err.textContent=ghErr(e); }
+  finally{ $("#tok-save").disabled=false; }
+};
+$("#to-settings").onclick=()=>view("settings");
+$("#set-back").onclick=()=>showList();
+$("#set-forget").onclick=()=>{ if(!confirm("Glömma GitHub-nyckeln i den här webbläsaren?")) return; store.set("token",null); view("setup"); };
+
+/* --- Listan --- */
+const fmtDate = iso => { const d=new Date(iso); return d.toLocaleDateString("sv-SE",{day:"numeric",month:"short",year:"numeric"})+" kl "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}); };
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function showList(){
+  view("list"); const list=$("#list"); list.innerHTML=`<div class="card muted">Hämtar …</div>`;
+  try{
+    const items = await loadTree();
+    if(!items.length){ list.innerHTML=`<div class="card empty"><h2>Inga prototyper än</h2><p class="muted">Klicka på Publicera ny prototyp för att lägga upp den första.</p></div>`; return; }
+    const meta = JSON.parse(store.get("meta")||"{}");
+    list.innerHTML = items.map(p=>`<div class="card proj" data-slug="${esc(p.slug)}">
+      <div class="t">${esc(meta[p.slug]?.name||p.slug)}</div>
+      <div class="u">${esc(siteUrl(p.slug))}<br><span class="js-date">&nbsp;</span></div>
+      <div class="acts">
+        <a class="btn small" href="${esc(siteUrl(p.slug))}" target="_blank" rel="noopener">Öppna</a>
+        <button class="btn small" data-act="link">Kopiera länk</button>
+        ${meta[p.slug]?.pw?`<button class="btn small" data-act="pw">Kopiera lösenord</button>`:""}
+        <button class="btn small" data-act="update">Ny version</button>
+        <button class="btn small" data-act="del">Ta bort</button>
+      </div></div>`).join("");
+    list.querySelectorAll(".proj").forEach(el=>{
+      const slug=el.dataset.slug;
+      el.querySelector('[data-act="link"]').onclick=()=>copy(siteUrl(slug),"Länken");
+      el.querySelector('[data-act="pw"]')?.addEventListener("click",()=>copy(meta[slug].pw,"Lösenordet"));
+      el.querySelector('[data-act="update"]').onclick=()=>openPublish(slug);
+      el.querySelector('[data-act="del"]').onclick=()=>removeProject(slug);
+      gh(`/commits?path=${encodeURIComponent(slug)}&sha=${CFG.branch}&per_page=1`).then(c=>{ if(c[0]) el.querySelector(".js-date").textContent="Uppdaterad "+fmtDate(c[0].commit.committer.date); }).catch(()=>{});
+    });
+  }catch(e){ list.innerHTML=`<div class="card err">${esc(ghErr(e))}</div>`; if(e.status===401) view("setup"); }
+}
+async function removeProject(slug){
+  if(!confirm(`Ta bort ${slug}? Länken slutar fungera för alla som har den.`)) return;
+  const p=TREE.find(x=>x.slug===slug);
+  try{ await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"DELETE",body:JSON.stringify({message:`Ta bort ${slug}`,sha:p.sha,branch:CFG.branch})});
+    const meta=JSON.parse(store.get("meta")||"{}"); delete meta[slug]; store.set("meta",JSON.stringify(meta)); toast("Borttagen"); showList(); }
+  catch(e){ alert(ghErr(e)); }
+}
+$("#new").onclick=()=>openPublish(null);
+
+/* ===== Publicera ===== */
+const WORDS=["solstol","palmblad","strandbar","sandslott","solhatt","havsbris","badkruka","parasoll","snorkel","lagun","korallrev","fyrtorn","seglats","hammock","kokosnot","glasskiosk","badring","vattenpolo","solnedgang","pool"];
+const rnd = n => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+const newPw = () => `${WORDS[rnd(WORDS.length)]}-${WORDS[rnd(WORDS.length)]}-${100+rnd(900)}`;
+const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60) || "prototyp";
+let SRC=null, FIXED_SLUG=null, slugTouched=false;
+
+function openPublish(slug){
+  SRC=null; FIXED_SLUG=slug; slugTouched=!!slug;
+  const meta=JSON.parse(store.get("meta")||"{}");
+  $("#pub-h").textContent = slug ? `Ny version av ${meta[slug]?.name||slug}` : "Publicera ny prototyp";
+  $("#f-name").value = slug ? (meta[slug]?.name||slug) : ""; $("#f-slug").value = slug||""; $("#f-slug").disabled=!!slug;
+  $("#f-pw").value = (slug && meta[slug]?.pw) || newPw();
+  $("#f-pwhint").textContent = !slug ? "Den som öppnar länken måste skriva lösenordet. Utan det går prototypen inte att läsa."
+    : meta[slug]?.pw ? "Samma lösenord som förra gången, så teamet behöver inget nytt."
+    : "Appen vet inte vilket lösenord som användes förra gången. Skriv in det gamla om teamet ska kunna fortsätta använda det.";
+  ["picked","fields","progress","result"].forEach(id=>$("#"+id).hidden=true); $("#pub-err").textContent="";
+  $("#publish").disabled=false; $("#drop").hidden=false; syncSlug(); view("pub");
+}
+$("#pub-back").onclick=()=>showList();
+$("#f-newpw").onclick=()=>{ $("#f-pw").value=newPw(); };
+$("#f-name").oninput=()=>{ if(!slugTouched) $("#f-slug").value=slugify($("#f-name").value); syncSlug(); };
+$("#f-slug").oninput=()=>{ slugTouched=true; syncSlug(); };
+$("#f-slug").onblur=()=>{ $("#f-slug").value=slugify($("#f-slug").value); syncSlug(); };
+function syncSlug(){ const s=slugify($("#f-slug").value||$("#f-name").value); $("#f-url").textContent=siteUrl(s); $("#f-exists").hidden = !!FIXED_SLUG || !TREE.some(p=>p.slug===s); }
+
+/* --- Välja filer: mapp (dra/välj) eller en html-fil --- */
+const drop=$("#drop");
+$("#pick-dir").onclick=e=>{ e.stopPropagation(); $("#in-dir").click(); };
+$("#pick-file").onclick=e=>{ e.stopPropagation(); $("#in-file").click(); };
+$("#in-dir").onchange=e=>{ const fs=[...e.target.files]; if(!fs.length) return;
+  const root=fs[0].webkitRelativePath.split("/")[0]; useFiles(fs.map(f=>({path:f.webkitRelativePath.split("/").slice(1).join("/"),file:f})), root); e.target.value=""; };
+$("#in-file").onchange=e=>{ const f=e.target.files[0]; if(f) useFiles([{path:f.name,file:f}], f.name.replace(/\.html?$/i,"")); e.target.value=""; };
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove("over")));
+drop.addEventListener("drop", async e=>{ e.preventDefault();
+  const items=[...e.dataTransfer.items].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  if(items.length===1 && items[0].isDirectory){ useFiles(await readDir(items[0],""), items[0].name); return; }
+  const files=[...e.dataTransfer.files].filter(f=>/\.html?$/i.test(f.name));
+  if(files.length===1) useFiles([{path:files[0].name,file:files[0]}], files[0].name.replace(/\.html?$/i,""));
+  else $("#pub-err").textContent="Dra in en mapp, eller en enda html-fil.";
+});
+const SKIP_DIRS = /^(\.|node_modules$)/;
+async function readDir(dir, prefix){
+  const out=[]; const reader=dir.createReader();
+  const batch = () => new Promise((res,rej)=>reader.readEntries(res,rej));
+  for(let es=await batch(); es.length; es=await batch()) for(const en of es){
+    if(en.isDirectory){ if(!SKIP_DIRS.test(en.name)) out.push(...await readDir(en, prefix+en.name+"/")); }
+    else out.push({path:prefix+en.name, file:await new Promise((res,rej)=>en.file(res,rej))});
+  }
+  return out;
+}
+
+/* ===== Baka ihop: alla sidor + allt de använder → en html ===== */
+const MIME={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",
+  woff2:"font/woff2",woff:"font/woff",ttf:"font/ttf",otf:"font/otf",mp4:"video/mp4",webm:"video/webm",mp3:"audio/mpeg",wav:"audio/wav",json:"application/json",
+  css:"text/css",js:"text/javascript",pdf:"application/pdf"};
+const ext = p => (p.split(".").pop()||"").toLowerCase();
+const readText = f => f.text();
+const readDataUrl = (f, mime) => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.replace(/^data:[^;,]*/, "data:"+mime)); r.onerror=rej; r.readAsDataURL(f); });
+const norm = p => { const out=[]; for(const s of p.split("/")){ if(s===""||s===".") continue; if(s==="..") out.pop(); else out.push(s); } return out.join("/"); };
+const dirOf = p => p.includes("/") ? p.slice(0,p.lastIndexOf("/")+1) : "";
+const isLocal = u => u && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\$\{)/i.test(u);
+
+async function bake(files){
+  const byPath=new Map(files.map(f=>[f.path,f.file]));
+  // Sidorna: html-filerna högst upp i mappen (index.html först, sedan i namnordning)
+  const minDepth=Math.min(...files.filter(f=>/\.html?$/i.test(f.path)).map(f=>f.path.split("/").length));
+  if(!isFinite(minDepth)) throw new Error("Hittade ingen html-fil i mappen.");
+  const pages=files.filter(f=>/\.html?$/i.test(f.path) && f.path.split("/").length===minDepth).map(f=>f.path)
+    .sort((a,b)=>(/(^|\/)index\.html?$/i.test(b)-/(^|\/)index\.html?$/i.test(a)) || a.localeCompare(b,"sv",{numeric:true}));
+  const used=new Set(), missing=new Set(), external=new Set(), cache=new Map();
+  const dataUrl = async p => { if(!cache.has(p)) cache.set(p, readDataUrl(byPath.get(p), MIME[ext(p)]||"application/octet-stream")); used.add(p); return cache.get(p); };
+  const assetPaths=[...byPath.keys()].filter(p=>!/\.html?$/i.test(p) && MIME[ext(p)] && !["css","js"].includes(ext(p))).sort((a,b)=>b.length-a.length);
+
+  // Sökvägar till bilder/typsnitt som står i texten (html, css, js), relativt filens mapp eller roten
+  async function inlineAssets(text, base){
+    for(const p of assetPaths){
+      const rel = base && p.startsWith(base) ? p.slice(base.length) : null;
+      for(const cand of new Set([p, rel].filter(Boolean)))
+        if(text.includes(cand)) text = text.split(cand).join(await dataUrl(p));
+    }
+    // url(...) i css med ../ osv.
+    text = await replaceAsync(text, /url\(\s*(['"]?)([^'")]+)\1\s*\)/g, async (m,q,u)=>{
+      if(!isLocal(u)) return m; const p=norm(base+u.split(/[?#]/)[0]);
+      return byPath.has(p) && MIME[ext(p)] ? `url("${await dataUrl(p)}")` : m; });
+    return text;
+  }
+  async function css(text, base){ return inlineAssets(text, base); }
+
+  async function page(p){
+    const base=dirOf(p); let h=await readText(byPath.get(p));
+    // script-taggar med src till lokala js-filer → inbäddade
+    h = await replaceAsync(h, /<script\b([^>]*?)\ssrc=(["'])([^"']+)\2([^>]*)>\s*<\/script>/gi, async (m,a,q,u,b)=>{
+      if(!isLocal(u)) return m; const fp=norm(base+u.split(/[?#]/)[0]);
+      if(!byPath.has(fp)){ missing.add(u); return m; } used.add(fp);
+      const js=(await inlineAssets(await readText(byPath.get(fp)), dirOf(fp))).replace(/<\/script/gi,"<\\/script").replace(/<!-{2}/g,"<\\!--");
+      return `<script${a}${b}>${js}<\/script>`; });
+    // <link rel="stylesheet" href="lokal.css"> → <style>
+    h = await replaceAsync(h, /<link\b[^>]*>/gi, async m=>{
+      if(!/rel=["']?stylesheet/i.test(m)) return m; const u=(m.match(/href=["']([^"']+)["']/i)||[])[1];
+      if(!isLocal(u)) return m; const fp=norm(base+u.split(/[?#]/)[0]);
+      if(!byPath.has(fp)){ missing.add(u); return m; } used.add(fp);
+      return `<style>${await css(await readText(byPath.get(fp)), dirOf(fp))}</style>`; });
+    h = await inlineAssets(h, base);
+    // Kvar: lokala filer som inte fanns, och saker som hämtas från nätet
+    for(const [,u] of h.matchAll(/(?:src|href)=["']([^"']+)["']/gi)){
+      const fp=norm(base+u.split(/[?#]/)[0]);
+      if(isLocal(u) && !pages.includes(fp) && !/\.html?$/i.test(fp) && !byPath.has(fp)) missing.add(u); }
+    for(const [,host] of h.matchAll(/(?:src=["']|url\(["']?)https?:\/\/([^/"')]+)/gi)) external.add(host);
+    return h;
+  }
+
+  const out={};
+  for(const p of pages) out[p]=await page(p);
+  let html;
+  if(pages.length===1) html=out[pages[0]];
+  else{
+    // Flera sidor (t.ex. versioner): varje sida i en egen ram, länkar mellan sidorna byter sida i samma fil
+    const PAGES_JS=JSON.stringify(pages);
+    for(const p of pages){
+      const inject = `<script>window.PV_FILE=${JSON.stringify(p)};window.PV_PAGES=${PAGES_JS};
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a||e.defaultPrevented||e.metaKey||e.ctrlKey||e.shiftKey||e.button!==0)return;
+var h=decodeURIComponent(a.getAttribute("href").split("#")[0]);if(PV_PAGES.indexOf(h)>-1){e.preventDefault();parent.postMessage({pv:h},"*");}},true);<\/script>`;
+      out[p] = /<head[^>]*>/i.test(out[p]) ? out[p].replace(/<head[^>]*>/i, m=>m+inject) : inject+out[p];
+    }
+    const jsStr = s => JSON.stringify(s).replace(/<\//g,"<\\/").replace(/<!-{2}/g,"<\\!--");
+    html = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title></title>
+<style>html,body{margin:0;height:100%}#pv{position:fixed;inset:0;width:100%;height:100%;border:0}</style></head><body>
+<iframe id="pv" title="Prototyp" allow="clipboard-write; fullscreen"></iframe>
+<script>const PAGES={${pages.map(p=>JSON.stringify(p)+":"+jsStr(out[p])).join(",")}};const pv=document.getElementById("pv");
+function show(f){if(!PAGES[f])f=${JSON.stringify(pages[0])};pv.srcdoc=PAGES[f];history.replaceState(null,"","#"+encodeURIComponent(f.replace(/\\.html?$/i,"")));pv.focus();}
+addEventListener("message",e=>{if(e.source===pv.contentWindow&&e.data&&e.data.pv)show(e.data.pv);});
+show(decodeURIComponent(location.hash.slice(1))+".html");<\/script></body></html>`;
+  }
+  const title = (out[pages[0]].match(/<title>([^<]*)<\/title>/i)||[])[1]||"";
+  return {html, pages, used:[...used], missing:[...missing], external:[...external], title:title.trim()};
+}
+async function replaceAsync(str, re, fn){
+  const parts=[]; let last=0;
+  for(const m of str.matchAll(re)){ parts.push(str.slice(last,m.index), fn(...m)); last=m.index+m[0].length; }
+  parts.push(str.slice(last)); return (await Promise.all(parts)).join("");
+}
+
+/* ===== Lås med lösenord: gzip + AES-GCM, nyckel från lösenordet (PBKDF2-SHA256, 300 000 varv) ===== */
+const b64 = u8 => { let s=""; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s); };
+async function lock(html, password, name){
+  const gz=new Uint8Array(await new Response(new Blob([html]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",salt,iterations:300000},base,{name:"AES-GCM",length:256},false,["encrypt"]);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,gz));
+  const wave=$("header img").src;
+  return `<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>${esc(name)}</title>
+<style>
+@font-face{font-family:"Thomas Headline";font-weight:700;font-display:swap;src:url("https://idun.nltg.com/assets/fonts/thomas-headline-700.woff2") format("woff2")}
+html,body{margin:0;height:100%;background:#e9e6e1;color:#202020;font-family:"Source Sans Pro",-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+img{width:48px;margin-bottom:8px}
+h1{margin:0;font:700 28px/1.1 "Thomas Headline",system-ui,sans-serif}
+p{margin:0 0 8px;font-size:16px;line-height:1.4;color:#555}
+label{font-size:15px}
+input{height:48px;border:1px solid #8f8f8f;border-radius:6px;padding:0 12px;font:400 17px system-ui,sans-serif;background:#fff}
+input:focus{outline:2px solid #4c7f81;outline-offset:-1px}
+button{height:48px;border:0;border-radius:999px;background:#ea5c0b;color:#fff;font:700 18px/1 "Thomas Headline",system-ui,sans-serif;text-transform:uppercase;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.err{min-height:20px;font-size:15px;color:#b3261e}
+</style></head>
+<body><main><form id="f" autocomplete="off">
+<img src="${wave}" alt="Ving"><h1>${esc(name)}</h1>
+<p>Prototyp. Ange lösenordet du har fått för att öppna den.</p>
+<label for="pw">Lösenord</label><input id="pw" type="password" autocomplete="current-password" autofocus required>
+<button id="go">Öppna</button><div class="err" id="err" role="alert"></div>
+</form></main>
+<script>
+const D={s:"${b64(salt)}",i:"${b64(iv)}",c:"${b64(ct)}"};
+const u8=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function unlock(pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",salt:u8(D.s),iterations:300000},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  let gz; try{ gz=await crypto.subtle.decrypt({name:"AES-GCM",iv:u8(D.i)},key,u8(D.c)); }catch(e){ return null; }
+  return await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+}
+const K="pv-pw:"+location.pathname;
+async function open_(pw,quiet){
+  const html=await unlock(pw);
+  if(html===null){ if(!quiet) err.textContent="Fel lösenord, försök igen."; return false; }
+  try{ sessionStorage.setItem(K,pw); }catch(e){}
+  document.open(); document.write(html); document.close(); return true;
+}
+f.onsubmit=async e=>{ e.preventDefault(); go.disabled=true; err.textContent="";
+  try{ if(!await open_(pw.value)){ go.disabled=false; pw.select(); } }catch(x){ err.textContent="Webbläsaren kunde inte öppna prototypen."; go.disabled=false; } };
+(async()=>{ let s=null; try{ s=sessionStorage.getItem(K); }catch(e){} if(s) try{ await open_(s,true); }catch(e){} })();
+<\/script></body></html>`;
+}
+
+/* --- När man har valt filer --- */
+async function useFiles(files, rootName){
+  $("#pub-err").textContent=""; const pk=$("#picked"); pk.hidden=false; pk.innerHTML=`<span class="muted">Läser filerna …</span>`;
+  try{
+    const b=await bake(files); SRC={...b, rootName};
+    const kb=n=>n>1e6?(n/1e6).toFixed(1)+" MB":Math.round(n/1e3)+" kB";
+    pk.innerHTML = `<span class="ok">✓ ${b.pages.length===1?`1 sida: ${esc(b.pages[0])}`:`${b.pages.length} sidor: ${b.pages.map(esc).join(", ")}`}</span>
+      <span class="ok">✓ ${b.used.length} filer bakas in (bilder, typsnitt, skript), totalt ${kb(new Blob([b.html]).size)}</span>
+      ${b.missing.length?`<span class="warn">⚠ Hittades inte i mappen: ${b.missing.slice(0,6).map(esc).join(", ")}${b.missing.length>6?" …":""}</span>`:""}
+      ${b.external.length?`<span class="warn">⚠ Hämtas från nätet när man öppnar: ${b.external.map(esc).join(", ")}</span>`:""}`;
+    if(!FIXED_SLUG){ $("#f-name").value = b.title.replace(/\s*[–-]\s*v?\d.*$/,"") || rootName; if(!slugTouched) $("#f-slug").value=slugify($("#f-name").value); }
+    $("#fields").hidden=false; syncSlug(); $("#f-name").focus();
+  }catch(e){ pk.innerHTML=""; pk.hidden=true; $("#pub-err").textContent="Kunde inte läsa prototypen: "+e.message; }
+}
+
+/* --- Publicera --- */
+const STEPS=["Låser med lösenordet","Laddar upp till GitHub","GitHub publicerar sidan (brukar ta 1–2 minuter)"];
+function step(i){ const pr=$("#progress"); pr.hidden=false; pr.innerHTML=STEPS.map((t,j)=>`<div class="${j<i?"done":j===i?"on":""}">${t}</div>`).join(""); }
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+$("#publish").onclick = async () => {
+  const name=$("#f-name").value.trim(), slug=FIXED_SLUG||slugify($("#f-slug").value||name), pw=$("#f-pw").value.trim(), err=$("#pub-err");
+  err.textContent="";
+  if(!SRC) return err.textContent="Välj prototypen först.";
+  if(!name) return err.textContent="Skriv ett namn.", $("#f-name").focus();
+  if(pw.length<6) return err.textContent="Lösenordet behöver vara minst 6 tecken.", $("#f-pw").focus();
+  const existing=TREE.find(p=>p.slug===slug);
+  if(existing && !FIXED_SLUG && !confirm(`${slug} finns redan. Vill du ersätta den med den här?`)) return;
+  $("#publish").disabled=true; $("#drop").hidden=true; $("#fields").hidden=true;
+  try{
+    step(0); const stamp=Date.now().toString(36);
+    const page=(await lock(SRC.html, pw, name)).replace("<head>",`<head><meta name="pp-build" content="${stamp}">`);
+    step(1);
+    const content=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.readAsDataURL(new Blob([page])); });
+    const put=await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"PUT",body:JSON.stringify({message:`${existing?"Uppdatera":"Publicera"} ${name}`,content,branch:CFG.branch,...(existing?{sha:existing.sha}:{})})});
+    const meta=JSON.parse(store.get("meta")||"{}"); meta[slug]={name,pw}; store.set("meta",JSON.stringify(meta));
+    await ensurePages();
+    step(2); const live=await waitLive(slug, stamp, put.commit?.sha);
+    $("#progress").hidden=true; showResult(slug,name,pw,live);
+    loadTree().catch(()=>{});
+  }catch(e){ err.textContent=e.status?ghErr(e):"Något gick fel: "+e.message; $("#publish").disabled=false; $("#fields").hidden=false; $("#drop").hidden=false; $("#progress").hidden=true; }
+};
+// Slår på GitHub Pages om det inte redan är på (main, roten)
+async function ensurePages(){
+  try{ await gh("/pages"); }
+  catch(e){ if(e.status!==404) return;
+    try{ await gh("/pages",{method:"POST",body:JSON.stringify({source:{branch:CFG.branch,path:"/"}})}); }catch(e2){} }
+}
+// Väntar tills den nya versionen syns på länken (eller tills GitHub säger att bygget är klart)
+async function waitLive(slug, stamp, sha){
+  const t0=Date.now();
+  while(Date.now()-t0 < 4*60e3){
+    await wait(6000);
+    try{ const r=await fetch(siteUrl(slug)+"?v="+stamp,{cache:"no-store"}); if(r.ok && (await r.text()).includes(stamp)) return true; }catch(e){}
+    try{ const b=await gh("/pages/builds/latest"); if(b.status==="built" && (!sha || b.commit===sha)) { await wait(4000); return true; } if(b.status==="errored") return false; }catch(e){}
+  }
+  return false;
+}
+function showResult(slug,name,pw,live){
+  const url=siteUrl(slug), r=$("#result"); r.hidden=false;
+  r.innerHTML = `<h2 style="margin:0">${live?"Klart! Prototypen är publicerad":"Uppladdad. GitHub publicerar den strax"}</h2>
+    ${live?"":`<p class="small" style="margin:0">Det tar ibland några minuter. Länken fungerar så fort GitHub är klar.</p>`}
+    <div class="u">${esc(url)}</div>
+    <div class="row"><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a>
+      <button class="btn small" id="r-link">Kopiera länk</button><button class="btn small" id="r-pw">Kopiera lösenord</button></div>
+    <p class="small muted" style="margin:0">Lösenord: <b>${esc(pw)}</b>. Skicka det separat från länken, t.ex. i ett eget meddelande.</p>
+    <div><button class="btn primary" id="r-done">Till listan</button></div>`;
+  $("#r-link").onclick=()=>copy(url,"Länken"); $("#r-pw").onclick=()=>copy(pw,"Lösenordet"); $("#r-done").onclick=()=>showList();
+}
+
+/* ===== Start ===== */
+store.get("token") ? showList() : view("setup");
+</script>
+</body>
+</html>
