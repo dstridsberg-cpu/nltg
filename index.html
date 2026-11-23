@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:16">
+<meta name="pp-app" content="2026-11-23T16:22">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -241,6 +241,12 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .onb li>div{display:flex;flex-direction:column;gap:2px;padding-top:6px}
 .onb li>div>b:first-child{font:700 18px/1.2 var(--head)}
 .onb li span{color:var(--subtle);font-size:15px}
+.vlock{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+.vlock>div:first-child{display:flex;flex-direction:column}
+.vlock>div:first-child b{font:700 18px/1.2 var(--head)}
+.vlock .row{flex:0 1 420px}
+.vlock .err{flex-basis:100%;margin:0}
+.gh-btn{display:inline-block;background:#1f883d;color:#fff!important;font:600 13px/1 -apple-system,system-ui,sans-serif;padding:5px 10px;border-radius:6px;vertical-align:1px}
 
 /* ===== Rörelse =====
    Samma easing och tider överallt. Vyer glider in i den riktning man rör sig, innehåll tonar in i tur och ordning,
@@ -308,7 +314,9 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
     <p class="muted" style="margin:0">Du loggar in med en nyckel från GitHub. Det tar en minut och görs bara en gång på den här datorn.</p>
     <ol class="onb">
       <li><div><b>Skapa en nyckel på GitHub</b>
-        <span>Rätt inställningar är redan ifyllda. Välj hur länge den ska gälla, scrolla ner och klicka på den gröna knappen <b>Generate token</b>.</span>
+        <span>GitHub-sidan har många val, men allt är redan ifyllt. Du behöver bara göra två saker:</span>
+        <span>· Överst vid <b>Expiration</b>: välj hur länge nyckeln ska gälla, t.ex. 90 dagar.</span>
+        <span>· <b>Scrolla hela vägen ner</b> till slutet av sidan och klicka på den gröna knappen <span class="gh-btn">Generate token</span></span>
         <a class="btn primary small" id="tok-classic" target="_blank" rel="noopener" style="margin-top:10px;align-self:flex-start">Skapa nyckel på GitHub ↗</a></div></li>
       <li><div><b>Kopiera nyckeln</b><span>Den börjar med <code>ghp_</code> och visas bara en gång.</span></div></li>
       <li><div><b>Klistra in den här</b>
@@ -330,6 +338,11 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
   <!-- 2. Listan -->
   <section id="v-list" hidden>
     <div class="notice" id="not-member" hidden></div>
+    <div class="notice vlock" id="vault-lock" hidden>
+      <div><b>Lås upp teamets prototyper</b><span>Skriv teamlösenordet du har fått, så ser du tumnaglarna och kan kopiera lösenorden.</span></div>
+      <div class="row"><input type="password" id="vl-pw" autocomplete="off" placeholder="Teamlösenord" aria-label="Teamlösenord"><button class="btn primary small" id="vl-go">Lås upp</button></div>
+      <div class="err" id="vl-err" role="alert"></div>
+    </div>
     <div class="top"><h2 style="margin:0">Publicerade prototyper</h2>
 </div>
     <div class="list" id="list"><div class="card muted">Hämtar …</div></div>
@@ -405,6 +418,12 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
           <div id="team-add" hidden></div>
           <div id="team"></div>
           <p class="small muted" style="margin:16px 0 0">Teamet sparas i repot (<code>hub/team.json</code>) som GitHub-användarnamn och roller. Namn och bilder hämtas från GitHub. Repot är publikt, så listan över användarnamn går att se för den som letar i repot.</p>
+        </section>
+
+        <section class="sec" data-sec="valv" aria-labelledby="h-valv">
+          <header><div><h3 id="h-valv">Teamlösenord</h3>
+            <p>Ett gemensamt lösenord för teamet. Det låser upp alla prototypers lösenord och tumnaglar, så att alla i teamet ser samma sak. Varje person skriver in det en gång per dator.</p></div></header>
+          <div id="valv"></div>
         </section>
 
         <section class="sec" data-sec="app" aria-labelledby="h-app">
@@ -539,11 +558,13 @@ $("#tok-save").onclick = async () => {
 const SET_ICON={
   konto:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   team:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>',
+  valv:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5"/></svg>',
   app:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>',
 };
 const SETTINGS=[
   {id:"konto", label:"Konto", show:renderAccount},
   {id:"team",  label:"Team",  show:showTeam},
+  {id:"valv",  label:"Teamlösenord", show:renderVault},
   {id:"app",   label:"Appen", show:()=>{}},
 ];
 function openSettings_(sec){
@@ -653,6 +674,7 @@ async function init(){
   try{
     ME=await ghAbs("https://api.github.com/user");
     await loadTeam();
+    await loadVault().catch(()=>{});
     const p=await profile(ME.login);
     $("#me").innerHTML=`${avImg(p)}<span>${esc(p.name)}</span>`;
   }catch(e){
@@ -660,6 +682,76 @@ async function init(){
     view("list"); $("#list").innerHTML=`<div class="card err">${esc(ghErr(e))}</div>`; return;
   }
   showList();
+}
+
+/* ===== Teamlösenord =====
+   hub/vault.bin = salt(16) + iv(12) + AES-GCM( {passwords:{adress:lösenord}} ), nyckel från teamlösenordet (PBKDF2, 300 000 varv).
+   Teamlösenordet sparas i webbläsaren efter att man skrivit in det. Den som publicerar lägger automatiskt in lösenordet i valvet. */
+let VAULT=null, VAULT_SHA=null, VAULT_EXISTS=false;
+async function loadVault(){
+  const p=(await gh(`/git/trees/${CFG.branch}?recursive=1`).catch(()=>({tree:[]}))).tree?.find(x=>x.path==="hub/vault.bin");
+  VAULT_EXISTS=!!p; VAULT_SHA=p?.sha||null; VAULT=null;
+  const key=store.get("teamkey"); if(!p||!key) return;
+  const blob=await openThumb(await ghRaw(`/contents/hub/vault.bin?ref=${CFG.branch}`), key);
+  if(!blob){ store.set("teamkey",null); return; }                 // fel eller bytt teamlösenord
+  VAULT=JSON.parse(await blob.text()); VAULT.passwords ||= {};
+  // Lösenorden från valvet blir kända i den här webbläsaren (för tumnaglar och "Kopiera lösenord")
+  const meta=JSON.parse(store.get("meta")||"{}");
+  for(const [slug,pw] of Object.entries(VAULT.passwords)) meta[slug]={...(meta[slug]||{}), pw};
+  store.set("meta",JSON.stringify(meta));
+}
+async function saveVault(change){
+  const key=store.get("teamkey"); if(!key) return;
+  for(let i=0;i<2;i++){
+    try{ if(VAULT_EXISTS && !VAULT) await loadVault(); VAULT ||= {passwords:{}}; change(VAULT);
+      const r=await gh(`/contents/hub/vault.bin`,{method:"PUT",body:JSON.stringify({message:"Uppdatera teamets valv",content:b64(await sealThumb(new Blob([JSON.stringify(VAULT)]),key)),branch:CFG.branch,...(VAULT_SHA?{sha:VAULT_SHA}:{})})});
+      VAULT_SHA=r.content?.sha; VAULT_EXISTS=true; return; }
+    catch(e){ if(e.status!==409 && e.status!==422) throw e; VAULT=null; await loadVault(); }
+  }
+}
+const vaultPut = (slug,pw) => saveVault(v=>{ v.passwords[slug]=pw; }).catch(()=>{});
+const vaultDel = slug => saveVault(v=>{ delete v.passwords[slug]; }).catch(()=>{});
+const strongPw = () => [0,1,2].map(()=>WORDS[rnd(WORDS.length)]).join("-")+"-"+(1000+rnd(9000));
+async function unlockVault(pw){
+  store.set("teamkey",pw); await loadVault();
+  if(!VAULT){ store.set("teamkey",null); return false; } return true;
+}
+function syncVaultBanner(){ const b=$("#vault-lock"); if(b) b.hidden = !(VAULT_EXISTS && !VAULT && isMember()); }
+$("#vl-go").onclick=async()=>{ const pw=$("#vl-pw").value.trim(), err=$("#vl-err"); err.textContent=""; if(!pw) return;
+  $("#vl-go").disabled=true; try{ if(await unlockVault(pw)){ toast("Upplåst"); $("#vl-pw").value=""; syncVaultBanner(); THUMB_CACHE.clear(); showList(); } else err.textContent="Fel teamlösenord."; }
+  catch(e){ err.textContent=ghErr(e); } $("#vl-go").disabled=false; };
+$("#vl-pw").onkeydown=e=>{ if(e.key==="Enter") $("#vl-go").click(); };
+// Inställningar → Teamlösenord
+async function renderVault(){
+  const box=$("#valv"); box.innerHTML=`<div class="muted small">Hämtar …</div>`;
+  try{ await loadVault(); }catch(e){ box.innerHTML=`<div class="err">${esc(ghErr(e))}</div>`; return; }
+  const key=store.get("teamkey"), adm=isAdmin();
+  if(!VAULT_EXISTS){
+    box.innerHTML = adm ? `<div class="srow"><div class="lab"><b>Skapa teamlösenord</b><span>Huben skapar ett starkt lösenord och lägger in lösenorden till de prototyper som den här datorn känner till.</span></div>
+      <div class="ctl"><button class="btn primary small" id="v-create">Skapa teamlösenord</button></div></div>`
+      : `<p class="muted">Inget teamlösenord är skapat än. Be en admin skapa ett.</p>`;
+    $("#v-create")?.addEventListener("click",async()=>{ const pw=strongPw(); store.set("teamkey",pw);
+      const meta=JSON.parse(store.get("meta")||"{}"); VAULT={passwords:Object.fromEntries(Object.entries(meta).filter(([,m])=>m.pw).map(([k,m])=>[k,m.pw]))};
+      try{ await saveVault(()=>{}); toast("Teamlösenordet är skapat"); renderVault(); }catch(e){ store.set("teamkey",null); alert(ghErr(e)); } });
+    return;
+  }
+  if(!VAULT){
+    box.innerHTML=`<div class="srow"><div class="lab"><b>Lås upp</b><span>Skriv teamlösenordet du har fått av en admin.</span></div>
+      <div class="ctl"><div class="row" style="align-self:stretch"><input type="password" id="v-pw" autocomplete="off" placeholder="Teamlösenord"><button class="btn primary small" id="v-go">Lås upp</button></div><div class="err" id="v-err"></div></div></div>`;
+    $("#v-go").onclick=async()=>{ if(await unlockVault($("#v-pw").value.trim())){ toast("Upplåst"); syncVaultBanner(); renderVault(); } else $("#v-err").textContent="Fel teamlösenord."; };
+    return;
+  }
+  const n=Object.keys(VAULT.passwords).length;
+  box.innerHTML=`<div class="srow"><div class="lab"><b>Status</b><span>På den här datorn.</span></div><div class="ctl"><span>Upplåst · ${n} ${n===1?"prototyp":"prototyper"} i valvet</span></div></div>
+    <div class="srow"><div class="lab"><b>Teamlösenordet</b><span>Ge det till nya i teamet, t.ex. i ett direktmeddelande. Skicka det inte i samma meddelande som länken till huben.</span></div>
+      <div class="ctl"><span class="val" id="v-show" data-on="0" style="font:400 16px ui-monospace,Menlo,monospace;background:#f7f5f1;border-radius:6px;padding:8px 10px">••••••••••••••</span>
+      <div class="row"><button class="btn small" id="v-copy">Kopiera</button><button class="btn small" id="v-toggle">Visa</button></div></div></div>
+    ${adm?`<div class="srow"><div class="lab"><b>Lägg in alla lösenord</b><span>Lägger till lösenorden som den här datorn känner till men som saknas i valvet.</span></div>
+      <div class="ctl"><button class="btn small" id="v-sync">Lägg in</button></div></div>`:""}`;
+  $("#v-copy").onclick=()=>copy(key,"Teamlösenordet");
+  $("#v-toggle").onclick=()=>{ const v=$("#v-show"), on=v.dataset.on==="1"; v.dataset.on=on?"0":"1"; v.textContent=on?"••••••••••••••":key; $("#v-toggle").textContent=on?"Visa":"Dölj"; };
+  $("#v-sync")?.addEventListener("click",async()=>{ const meta=JSON.parse(store.get("meta")||"{}");
+    await saveVault(v=>{ for(const [k,m] of Object.entries(meta)) if(m.pw && TREE.some(p=>p.slug===k)) v.passwords[k]=m.pw; }); toast("Lösenorden är inlagda"); renderVault(); });
 }
 
 /* --- Team-vyn --- */
@@ -731,6 +823,7 @@ async function showList(){
   view("list"); const list=$("#list");
   if(!list.querySelector(".proj")) list.innerHTML=Array.from({length:3},()=>`<div class="skc" aria-hidden="true"><div class="sk img"></div><div class="b"><div class="sk" style="height:18px;width:60%"></div><div class="sk" style="height:12px;width:40%"></div></div></div>`).join("");
   if(!ME) return init();
+  syncVaultBanner();
   const nm=$("#not-member"); nm.hidden=isMember(); nm.innerHTML=`Du (<b>@${esc(ME.login)}</b>) är inte med i UX-teamet än. Be en admin lägga till dig under <b>Inställningar → Team</b>, så kan du publicera.`;
   try{
     let items = await loadTree(); await loadInfo();
@@ -863,7 +956,7 @@ function openSettings(slug, from){
       ${m.pw?`<span class="val" id="s-pw" data-on="0">••••••••••••</span>
       <div class="row"><button class="btn small" id="s-pwcopy">Kopiera lösenord</button><button class="btn small" id="s-pwshow">Visa</button></div>
       <span class="hint" style="margin:0">Skicka lösenordet separat från länken.</span>`
-      :`<span class="hint" style="margin:0">Appen känner inte till lösenordet på den här datorn. Det sparas här nästa gång du publicerar en ny version.</span>`}</div>
+      :`<span class="hint" style="margin:0">${VAULT_EXISTS&&!VAULT?"Lås upp med teamlösenordet för att se lösenordet.":"Huben känner inte till lösenordet. Det sparas nästa gång någon publicerar en ny version."}</span>`}</div>
 `, from, slug);
   byLine($("#s-created"), info.createdBy, ""); byLine($("#s-updated"), info.updatedBy, "");
   const ni=$("#s-name"), ns=$("#s-name-save");
@@ -922,7 +1015,7 @@ async function restoreVersion(slug, sha, n){
     const buf=new Uint8Array(await ghRaw(`/contents/${encodeURIComponent(slug)}/index.html?ref=${sha}`));
     await loadTree(); const cur=TREE.find(p=>p.slug===slug);
     await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"PUT",body:JSON.stringify({message:`Återställ ${name} till version ${n}`,content:b64(buf),branch:CFG.branch,...(cur?{sha:cur.sha}:{})})});
-    if(meta[slug]){ delete meta[slug].pw; store.set("meta",JSON.stringify(meta)); }
+    if(meta[slug]){ delete meta[slug].pw; store.set("meta",JSON.stringify(meta)); } vaultDel(slug);
     await saveInfo(slug,{updatedBy:ME.login, updatedAt:new Date().toISOString()}).catch(()=>{});
     toast(`Version ${n} är återställd. GitHub publicerar den inom ett par minuter.`); if(!$("#drawer").hidden) closeHistory(); showList();
   }catch(e){ alert(ghErr(e)); }
@@ -1052,7 +1145,7 @@ async function removeProject(slug){
   try{ await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"DELETE",body:JSON.stringify({message:`Ta bort ${slug}`,sha:p.sha,branch:CFG.branch})});
     if(p.thumb) await gh(`/contents/${encodeURIComponent(slug)}/tumnagel.bin`,{method:"DELETE",body:JSON.stringify({message:`Ta bort tumnagel för ${slug}`,sha:p.thumb,branch:CFG.branch})}).catch(()=>{});
     if(INFO[slug]?._sha) await gh(`/contents/${encodeURIComponent(slug)}/info.json`,{method:"DELETE",body:JSON.stringify({message:`Ta bort info för ${slug}`,sha:INFO[slug]._sha,branch:CFG.branch})}).catch(()=>{});
-    const meta=JSON.parse(store.get("meta")||"{}"); delete meta[slug]; store.set("meta",JSON.stringify(meta)); toast("Borttagen"); showList(); }
+    const meta=JSON.parse(store.get("meta")||"{}"); delete meta[slug]; store.set("meta",JSON.stringify(meta)); vaultDel(slug); toast("Borttagen"); showList(); }
   catch(e){ alert(ghErr(e)); }
 }
 
@@ -1350,6 +1443,7 @@ $("#publish").onclick = async () => {
     const content=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.readAsDataURL(new Blob([page])); });
     const put=await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"PUT",body:JSON.stringify({message:`${existing?"Uppdatera":"Publicera"} ${name}${$("#f-note").value.trim()?": "+$("#f-note").value.trim():""}`,content,branch:CFG.branch,...(existing?{sha:existing.sha}:{})})});
     const meta=JSON.parse(store.get("meta")||"{}"), oldPw=meta[slug]?.pw; meta[slug]={name,pw}; store.set("meta",JSON.stringify(meta));
+    vaultPut(slug, pw);
     const now=new Date().toISOString();
     await saveInfo(slug, existing && INFO[slug] ? {name, updatedBy:ME.login, updatedAt:now} : {name, createdBy:INFO[slug]?.createdBy||ME.login, createdAt:INFO[slug]?.createdAt||now, updatedBy:ME.login, updatedAt:now}).catch(()=>{});
     if(THUMB_P) await THUMB_P;
