@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T15:33">
+<meta name="pp-app" content="2026-11-23T15:39">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -129,9 +129,10 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .mem .adm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #eee9e2;padding-top:12px}
 .mem select,.addm select{height:36px;border:1px solid #8f8f8f;border-radius:6px;padding:0 8px;font:inherit;background:#fff}
 /* Inställningar: meny till vänster, sektioner till höger. Nya sektioner läggs till i SETTINGS (skriptet). */
-.set-head{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.set-head{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;align-items:center;margin-bottom:24px}
+.set-head h2{padding-left:32px}
 .set-head h2{margin:0;font-size:26px}
-.set-back{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:6px 0;color:var(--subtle);font:400 15px/1 var(--body)}
+.set-back{justify-self:start;display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:6px 0;color:var(--subtle);font:400 15px/1 var(--body)}
 .set-back:hover{color:var(--text)}
 .set-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;align-items:start}
 .set-nav{position:sticky;top:24px;display:flex;flex-direction:column;gap:2px}
@@ -167,6 +168,8 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .addrow select{height:46px;border:1px solid #8f8f8f;border-radius:6px;padding:0 8px;font:inherit;background:#fff}
 @media (max-width:860px){
   .set-layout{grid-template-columns:1fr;gap:16px}
+  .set-head{grid-template-columns:1fr;gap:4px}
+  .set-head h2{padding-left:0}
   .set-nav{position:static;flex-direction:row;overflow-x:auto;gap:4px}
   .set-nav button{white-space:nowrap}
   .sec{padding:20px}
@@ -712,6 +715,21 @@ function openDrawer(title, sub, html, from, slug){
   d.hidden=false; requestAnimationFrame(()=>{ d.classList.add("on"); $("#drawer-bg").classList.add("on"); });
   document.removeEventListener("keydown",drawerKeys); document.addEventListener("keydown",drawerKeys); $("#drawer-x").focus();
 }
+/* Lösenordssidan visar namnet från info.json. Sidor publicerade innan det fanns uppgraderas en gång
+   (namn, rubrik och det lilla skriptet byts i det olåsta skalet; det krypterade innehållet rörs inte). */
+const LIVE_NAME = `<script id="pp-name-live">fetch("info.json?"+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(i){if(i&&i.name){var t=document.getElementById("t");if(t)t.textContent=i.name;document.title=i.name;}}).catch(function(){});<\/script>`;
+async function upgradeShell(slug, name){
+  const p=TREE.find(x=>x.slug===slug); if(!p) return;
+  let page=new TextDecoder().decode(await ghRaw(`/contents/${encodeURIComponent(slug)}/index.html?ref=${CFG.branch}`));
+  if(page.includes('id="pp-name-live"') || !/const D=\{s:"/.test(page)) return;
+  const at=page.indexOf("<script>"); if(at<0) return;
+  let head=page.slice(0,at), rest=page.slice(at);
+  head=head.replace(/<title>[^<]*<\/title>/, `<title>${esc(name)}</title>`).replace(/<h1>[^<]*<\/h1>/, `<h1 id="t">${esc(name)}</h1>`);
+  const end=rest.lastIndexOf("</body>"); if(end<0) return;
+  rest=rest.slice(0,end)+LIVE_NAME+"\n"+rest.slice(end);
+  await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"PUT",body:JSON.stringify({message:`Namn på lösenordssidan: ${name}`,content:utf8b64(head+rest),branch:CFG.branch,sha:p.sha})});
+  await loadTree();
+}
 // Prototypens tumnagel som sidhuvud i panelen (samma bild som på kortet)
 async function drawerHero(slug){
   const h=$("#drawer-hero"); h.hidden=!slug; if(!slug) return;
@@ -728,7 +746,7 @@ function openSettings(slug, from){
   openDrawer("Inställningar", nameOf(slug), `
     <div class="set-row"><label class="k" for="s-name" style="margin:0">Namn i huben</label>
       ${isMember()?`<div class="row"><input type="text" id="s-name" value="${esc(nameOf(slug))}" maxlength="80" autocomplete="off"><button class="btn small" id="s-name-save" disabled>Spara</button></div>
-      <span class="hint" style="margin:0">Rubriken på kortet. Sidan där man skriver lösenordet får det nya namnet nästa gång du publicerar en ny version.</span>`
+      <span class="hint" style="margin:0">Rubriken på kortet och på sidan där man skriver lösenordet. Lösenordssidan visar det nya namnet inom någon minut.</span>`
       :`<span>${esc(nameOf(slug))}</span>`}</div>
     <div class="set-row"><span class="k">Skapad</span><span class="by" id="s-created"></span>
       <span class="small muted">${info.createdAt?esc(fmtDate(info.createdAt)):""}</span></div>
@@ -750,6 +768,7 @@ function openSettings(slug, from){
     ns.onclick=async()=>{ const name=ni.value.trim(); ns.disabled=true; ns.textContent="Sparar …";
       try{
         await saveInfo(slug,{name});
+        await upgradeShell(slug, name).catch(()=>{});
         const meta=JSON.parse(store.get("meta")||"{}"); if(meta[slug]){ meta[slug].name=name; store.set("meta",JSON.stringify(meta)); }
         $("#drawer-sub").textContent=name;
         const t=document.querySelector(`.proj[data-slug="${CSS.escape(slug)}"] .t span`); if(t) t.textContent=name;
@@ -765,7 +784,7 @@ async function openHistory(slug, from){
   const meta=JSON.parse(store.get("meta")||"{}"), box=$("#drawer-list");
   openDrawer("Versionshistorik", nameOf(slug), `<div class="muted small" style="padding:16px 0">Hämtar versioner …</div>`, from, slug);
   try{
-    const cs=(await gh(`/commits?path=${encodeURIComponent(slug+"/index.html")}&sha=${CFG.branch}&per_page=50`)).filter(c=>!/^Ta bort /.test(c.commit.message));
+    const cs=(await gh(`/commits?path=${encodeURIComponent(slug+"/index.html")}&sha=${CFG.branch}&per_page=50`)).filter(c=>!/^(Ta bort |Namn på lösenordssidan)/.test(c.commit.message));
     const total=cs.length;
     box.innerHTML = cs.map((c,i)=>{ const n=total-i;
       return `<div class="v" data-sha="${c.sha}" data-n="${n}"><div><div class="d">Version ${n}${i===0?'<span class="badge">Nu publicerad</span>':""}</div>
@@ -1155,7 +1174,7 @@ button:disabled{opacity:.6;cursor:default}
 .err{min-height:20px;font-size:15px;color:#b3261e}
 </style></head>
 <body><main><form id="f" autocomplete="off">
-<img src="${wave}" alt="Ving"><h1>${esc(name)}</h1>
+<img src="${wave}" alt="Ving"><h1 id="t">${esc(name)}</h1>
 <p>Prototyp. Ange lösenordet du har fått för att öppna den.</p>
 <label for="pw">Lösenord</label><input id="pw" type="password" autocomplete="current-password" autofocus required>
 <button id="go">Öppna</button><div class="err" id="err" role="alert"></div>
@@ -1179,7 +1198,9 @@ async function open_(pw,quiet){
 f.onsubmit=async e=>{ e.preventDefault(); go.disabled=true; err.textContent="";
   try{ if(!await open_(pw.value)){ go.disabled=false; pw.select(); } }catch(x){ err.textContent="Webbläsaren kunde inte öppna prototypen."; go.disabled=false; } };
 (async()=>{ let s=null; try{ s=sessionStorage.getItem(K); }catch(e){} if(s) try{ await open_(s,true); }catch(e){} })();
-<\/script></body></html>`;
+<\/script>
+<script id="pp-name-live">fetch("info.json?"+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(i){if(i&&i.name){var t=document.getElementById("t");if(t)t.textContent=i.name;document.title=i.name;}}).catch(function(){});<\/script>
+</body></html>`;
 }
 
 /* --- När man har valt filer --- */
