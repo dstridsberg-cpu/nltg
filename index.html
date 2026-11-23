@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<meta name="pp-app" content="2026-11-23T11:55">
 <title>Prototyper</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -187,7 +188,17 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
     <div class="top" style="margin:0"><h2 style="margin:0">Inställningar</h2><button class="link" id="set-back">Tillbaka</button></div>
     <p style="margin:0">Kopplad till <b class="js-repo"></b>.</p>
     <p class="muted small" style="margin:0">GitHub-nyckeln och lösenorden du har valt sparas bara i den här webbläsaren, på den här datorn.</p>
-    <div class="row"><button class="btn small" id="set-forget">Koppla från (glöm nyckeln)</button></div>
+    <div class="stack" style="border-top:1px solid var(--line);padding-top:16px;gap:8px">
+      <h2 style="margin:0;font-size:18px">Uppdatera appen</h2>
+      <p class="small" style="margin:0">Den här versionen: <b id="app-ver"></b></p>
+      <p class="small muted" style="margin:0">När appen har fått nya funktioner finns en ny fil här på datorn: <code>prototyp-publicerare/ladda-upp/index.html</code>. Välj eller dra in den så byts appen ut.</p>
+      <div class="drop" id="app-drop" tabindex="0" style="padding:18px 16px"><button class="btn small" id="app-pick">Välj ny appfil …</button>
+        <div class="hint">eller dra in den här</div></div>
+      <input type="file" id="app-in" accept=".html" hidden>
+      <div class="progress" id="app-prog" hidden></div>
+      <div class="err" id="app-err" role="alert"></div>
+    </div>
+    <div class="row" style="border-top:1px solid var(--line);padding-top:16px"><button class="btn small" id="set-forget">Koppla från (glöm nyckeln)</button></div>
   </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -245,9 +256,10 @@ const ghErr = e => e.status===401 ? "GitHub-nyckeln fungerar inte längre (fel e
   : e.message==="Failed to fetch" ? "Kunde inte nå GitHub. Är du uppkopplad?" : "GitHub svarade: "+e.message;
 
 /* Projekt = mappar i repots rot som har en index.html */
-let TREE = [];
+let TREE = [], ROOT_SHA = null;
 async function loadTree(){
   const t = await gh(`/git/trees/${CFG.branch}?recursive=1`).catch(e=>{ if(e.status===404||e.status===409) return {tree:[]}; throw e; });
+  ROOT_SHA = (t.tree||[]).find(x=>x.path==="index.html")?.sha || null;
   const thumbs = new Map((t.tree||[]).filter(x=>/^[^/]+\/tumnagel\.bin$/.test(x.path)).map(x=>[x.path.split("/")[0], x.sha]));
   TREE = (t.tree||[]).filter(x=>/^[^/]+\/index\.html$/.test(x.path)).map(x=>({slug:x.path.split("/")[0], sha:x.sha, thumb:thumbs.get(x.path.split("/")[0])||null}));
   return TREE;
@@ -410,6 +422,37 @@ async function putThumb(slug, pw, oldPw){
   if(!blob && cur && oldPw && oldPw!==pw) blob=await openThumb(await ghRaw(`/contents/${encodeURIComponent(slug)}/tumnagel.bin?ref=${CFG.branch}`), oldPw);
   if(!blob) return;
   await gh(`/contents/${encodeURIComponent(slug)}/tumnagel.bin`,{method:"PUT",body:JSON.stringify({message:`Tumnagel för ${slug}`,content:b64(await sealThumb(blob,pw)),branch:CFG.branch,...(cur?{sha:cur}:{})})});
+}
+
+/* ===== Uppdatera appen själv: den nya index.html laddas upp till repots rot ===== */
+const APP_VERSION = document.querySelector('meta[name="pp-app"]').content;
+const fmtVer = v => /^\d{4}-\d\d-\d\dT/.test(v) ? fmtDate(v) : v;
+$("#app-ver").textContent = fmtVer(APP_VERSION);
+$("#app-pick").onclick=()=>$("#app-in").click();
+$("#app-in").onchange=e=>{ const f=e.target.files[0]; if(f) updateApp(f); e.target.value=""; };
+const appDrop=$("#app-drop");
+["dragenter","dragover"].forEach(t=>appDrop.addEventListener(t,e=>{ e.preventDefault(); appDrop.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>appDrop.addEventListener(t,()=>appDrop.classList.remove("over")));
+appDrop.addEventListener("drop",e=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) updateApp(f); });
+async function updateApp(file){
+  const err=$("#app-err"), pr=$("#app-prog"); err.textContent="";
+  const text=await file.text(), ver=(text.match(/<meta name="pp-app" content="([^"]+)">/)||[])[1];
+  if(!ver || !/id="v-setup"/.test(text)) return err.textContent="Det här ser inte ut att vara appfilen. Välj index.html i mappen prototyp-publicerare/ladda-upp.";
+  if(ver===APP_VERSION) return err.textContent="Det är samma version som du redan har.";
+  if(ver<APP_VERSION && !confirm(`Filen är äldre (${fmtVer(ver)}) än den du har (${fmtVer(APP_VERSION)}). Byta ändå?`)) return;
+  const steps=["Laddar upp den nya appen","GitHub publicerar den (1–2 minuter)","Laddar om"];
+  const step=i=>{ pr.hidden=false; pr.innerHTML=steps.map((t,j)=>`<div class="${j<i?"done":j===i?"on":""}">${t}</div>`).join(""); };
+  try{
+    step(0); await loadTree();
+    await gh(`/contents/index.html`,{method:"PUT",body:JSON.stringify({message:`Uppdatera appen till ${ver}`,content:b64(new TextEncoder().encode(text)),branch:CFG.branch,...(ROOT_SHA?{sha:ROOT_SHA}:{})})});
+    step(1);
+    const t0=Date.now(), here=location.href.split(/[?#]/)[0];
+    while(Date.now()-t0<4*60e3){
+      await wait(6000);
+      try{ const r=await fetch(here+"?v="+Date.now(),{cache:"no-store"}); if(r.ok && (await r.text()).includes(`content="${ver}"`)) break; }catch(e){}
+    }
+    step(2); await wait(600); location.replace(here+"?v="+Date.now());
+  }catch(e){ pr.hidden=true; err.textContent=ghErr(e); }
 }
 
 async function removeProject(slug){
