@@ -5,6 +5,12 @@
       "role": "admin",
       "added": "2026-11-23T14:08:40.054Z",
       "addedBy": "dstridsberg-cpu"
+    },
+    {
+      "login": "christofer-blom",
+      "role": "admin",
+      "added": "2026-11-23T15:07:33.671Z",
+      "addedBy": "dstridsberg-cpu"
     }
   ]
 }
