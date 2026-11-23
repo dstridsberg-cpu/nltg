@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T15:28">
+<meta name="pp-app" content="2026-11-23T15:33">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -180,6 +180,8 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .drawer-bg.on{opacity:1;pointer-events:auto}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .3s cubic-bezier(.3,.7,.2,1);z-index:51;display:flex;flex-direction:column}
 .drawer.on{transform:none}
+.drawer .dhero{aspect-ratio:16/10;background:#f2efea;display:flex;align-items:center;justify-content:center;color:#b5aea4;font:700 48px/1 var(--head);overflow:hidden;flex:none}
+.drawer .dhero img{width:100%;height:100%;object-fit:cover;display:block}
 .drawer .dh{display:flex;align-items:flex-start;gap:12px;padding:24px 24px 16px;border-bottom:1px solid #eee9e2}
 .drawer .dh h2{flex:1;margin:0}
 .drawer .dh .sub{display:block;margin-top:4px;font:400 15px/1.3 var(--body);color:var(--subtle)}
@@ -355,6 +357,7 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 </div>
 <div class="drawer-bg" id="drawer-bg"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-h" hidden>
+  <div class="dhero" id="drawer-hero" aria-hidden="true"></div>
   <div class="dh"><h2 id="drawer-h"><span id="drawer-title">Versionshistorik</span><span class="sub" id="drawer-sub"></span></h2>
     <button class="x" id="drawer-x" aria-label="Stäng"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="db"><div class="hist" id="drawer-list"></div></div>
@@ -702,17 +705,31 @@ function drawerKeys(e){
     else if(!e.shiftKey && document.activeElement===f.at(-1)){ e.preventDefault(); f[0].focus(); } }
 }
 $("#drawer-x").onclick=closeHistory; $("#drawer-bg").onclick=closeHistory;
-function openDrawer(title, sub, html, from){
+function openDrawer(title, sub, html, from, slug){
   drawerFrom=from; const d=$("#drawer");
+  drawerHero(slug);
   $("#drawer-title").textContent=title; $("#drawer-sub").textContent=sub; $("#drawer-list").innerHTML=html;
   d.hidden=false; requestAnimationFrame(()=>{ d.classList.add("on"); $("#drawer-bg").classList.add("on"); });
   document.removeEventListener("keydown",drawerKeys); document.addEventListener("keydown",drawerKeys); $("#drawer-x").focus();
+}
+// Prototypens tumnagel som sidhuvud i panelen (samma bild som på kortet)
+async function drawerHero(slug){
+  const h=$("#drawer-hero"); h.hidden=!slug; if(!slug) return;
+  h.textContent=nameOf(slug).slice(0,1).toUpperCase();
+  const p=TREE.find(x=>x.slug===slug), pw=JSON.parse(store.get("meta")||"{}")[slug]?.pw;
+  const card=document.querySelector(`.proj[data-slug="${CSS.escape(slug)}"] .th img`);
+  if(card){ h.innerHTML=`<img src="${card.src}" alt="">`; return; }
+  if(p?.thumb && pw) showThumb(h, slug, p.thumb, pw);
 }
 /* Inställningar per prototyp: länk och lösenord */
 function openSettings(slug, from){
   const meta=JSON.parse(store.get("meta")||"{}"), m=meta[slug]||{}, url=siteUrl(slug);
   const info=INFO[slug]||{};
   openDrawer("Inställningar", nameOf(slug), `
+    <div class="set-row"><label class="k" for="s-name" style="margin:0">Namn i huben</label>
+      ${isMember()?`<div class="row"><input type="text" id="s-name" value="${esc(nameOf(slug))}" maxlength="80" autocomplete="off"><button class="btn small" id="s-name-save" disabled>Spara</button></div>
+      <span class="hint" style="margin:0">Rubriken på kortet. Sidan där man skriver lösenordet får det nya namnet nästa gång du publicerar en ny version.</span>`
+      :`<span>${esc(nameOf(slug))}</span>`}</div>
     <div class="set-row"><span class="k">Skapad</span><span class="by" id="s-created"></span>
       <span class="small muted">${info.createdAt?esc(fmtDate(info.createdAt)):""}</span></div>
     <div class="set-row"><span class="k">Senast uppdaterad</span><span class="by" id="s-updated"></span>
@@ -724,16 +741,29 @@ function openSettings(slug, from){
       <div class="row"><button class="btn small" id="s-pwcopy">Kopiera lösenord</button><button class="btn small" id="s-pwshow">Visa</button></div>
       <span class="hint" style="margin:0">Skicka lösenordet separat från länken.</span>`
       :`<span class="hint" style="margin:0">Appen känner inte till lösenordet på den här datorn. Det sparas här nästa gång du publicerar en ny version.</span>`}</div>
-    <div class="set-row"><span class="k">Adress</span><span class="val">${esc(slug)}</span>
-      <span class="hint" style="margin:0">Adressen går inte att ändra. Vill du ha en ny, ladda upp prototypen som en ny prototyp.</span></div>`, from);
+`, from, slug);
   byLine($("#s-created"), info.createdBy, ""); byLine($("#s-updated"), info.updatedBy, "");
+  const ni=$("#s-name"), ns=$("#s-name-save");
+  if(ni){
+    ni.oninput=()=>{ ns.disabled = !ni.value.trim() || ni.value.trim()===nameOf(slug); };
+    ni.onkeydown=e=>{ if(e.key==="Enter" && !ns.disabled) ns.click(); };
+    ns.onclick=async()=>{ const name=ni.value.trim(); ns.disabled=true; ns.textContent="Sparar …";
+      try{
+        await saveInfo(slug,{name});
+        const meta=JSON.parse(store.get("meta")||"{}"); if(meta[slug]){ meta[slug].name=name; store.set("meta",JSON.stringify(meta)); }
+        $("#drawer-sub").textContent=name;
+        const t=document.querySelector(`.proj[data-slug="${CSS.escape(slug)}"] .t span`); if(t) t.textContent=name;
+        toast("Namnet är sparat");
+      }catch(e){ alert(ghErr(e)); ns.disabled=false; }
+      ns.textContent="Spara"; };
+  }
   $("#s-link").onclick=()=>copy(url,"Länken");
   if(m.pw){ $("#s-pwcopy").onclick=()=>copy(m.pw,"Lösenordet");
     $("#s-pwshow").onclick=()=>{ const v=$("#s-pw"), on=v.dataset.on==="1"; v.dataset.on=on?"0":"1"; v.textContent=on?"••••••••••••":m.pw; $("#s-pwshow").textContent=on?"Visa":"Dölj"; }; }
 }
 async function openHistory(slug, from){
   const meta=JSON.parse(store.get("meta")||"{}"), box=$("#drawer-list");
-  openDrawer("Versionshistorik", nameOf(slug), `<div class="muted small" style="padding:16px 0">Hämtar versioner …</div>`, from);
+  openDrawer("Versionshistorik", nameOf(slug), `<div class="muted small" style="padding:16px 0">Hämtar versioner …</div>`, from, slug);
   try{
     const cs=(await gh(`/commits?path=${encodeURIComponent(slug+"/index.html")}&sha=${CFG.branch}&per_page=50`)).filter(c=>!/^Ta bort /.test(c.commit.message));
     const total=cs.length;
