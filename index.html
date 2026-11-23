@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:28">
+<meta name="pp-app" content="2026-11-23T16:31">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -173,6 +173,10 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .tbl .p b{display:block}
 .tbl .p span{font-size:14px;color:var(--subtle)}
 .tbl .num{white-space:nowrap}
+.st{display:inline-block;padding:2px 8px;border-radius:999px;font:700 12px/1.5 var(--body)}
+.st.ok{background:#eef6f0;color:var(--ok)}
+.st.wait{background:#fff6e0;color:#8a5a00}
+.st.no{background:#fdecea;color:var(--err)}
 .tbl td.act{text-align:right}
 .tbl select{height:34px;border:1px solid #8f8f8f;border-radius:6px;padding:0 8px;font:inherit;background:#fff}
 .addrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;background:#f7f5f1;border-radius:8px;padding:14px;margin-top:12px}
@@ -797,22 +801,40 @@ async function showTeam(){
     const admins=TEAM.members.filter(m=>m.role==="admin").length, adm=isAdmin();
     $("#team-n").textContent=`(${TEAM.members.length})`;
     $("#team-add-open").hidden=!adm;
+    // Åtkomst på GitHub per person: har åtkomst / inbjuden (väntar) / inte inbjuden. Bara för admins vars nyckel får läsa det.
+    let ACC=null;
+    if(adm){ try{
+      const [col,inv]=await Promise.all([gh(`/collaborators?per_page=100`), gh(`/invitations?per_page=100`)]);
+      ACC={col:new Set(col.map(c=>c.login.toLowerCase())), inv:new Map(inv.map(i=>[i.invitee?.login?.toLowerCase(), i]))};
+    }catch(e){ ACC=null; } }
+    const accCell = m => { if(!ACC) return ""; const l=m.login.toLowerCase();
+      if(l===CFG.owner.toLowerCase()) return `<span class="st ok">Äger repot</span>`;
+      if(ACC.col.has(l)) return `<span class="st ok">Har åtkomst</span>`;
+      const i=ACC.inv.get(l);
+      if(i) return `<span class="st wait">Inbjuden, väntar på svar</span><br><button class="link small" data-reinv>Skicka igen</button>`;
+      return `<span class="st no">Inte inbjuden</span><br><button class="link small" data-inv>Bjud in</button>`; };
     const rows=await Promise.all(TEAM.members.map(async m=>{ const p=await profile(m.login), adder=m.addedBy&&m.addedBy!==m.login?await profile(m.addedBy):null, n=count(m.login), me=m.login===ME.login;
       const roleTxt=m.role==="admin"?"Admin":"Designer";
       return `<tr data-login="${esc(m.login)}">
         <td><div class="p">${avImg(p)}<div><b>${esc(p.name)}${me?' <span>(du)</span>':""}</b><span><a href="https://github.com/${esc(m.login)}" target="_blank" rel="noopener">@${esc(m.login)}</a></span></div></div></td>
         <td>${adm?`<select data-role aria-label="Roll för ${esc(p.name)}" ${me&&admins<2?'disabled title="Det måste finnas minst en admin"':""}><option value="designer"${m.role==="designer"?" selected":""}>Designer</option><option value="admin"${m.role==="admin"?" selected":""}>Admin</option></select>`:`<span class="role ${m.role}">${roleTxt}</span>`}</td>
+        ${ACC?`<td class="hide-s">${accCell(m)}</td>`:""}
         <td class="num">${n}</td>
         <td class="hide-s">${esc(new Date(m.added).toLocaleDateString("sv-SE",{day:"numeric",month:"short",year:"numeric"}))}${adder?`<br><span class="small muted">av ${esc(adder.name)}</span>`:""}</td>
         <td class="act">${adm&&!me?`<button class="ico danger" data-rm title="Ta bort ur teamet" aria-label="Ta bort ${esc(p.name)} ur teamet">${ICON.trash}</button>`:""}</td>
       </tr>`; }));
-    box.innerHTML=`<table class="tbl"><thead><tr><th>Person</th><th>Roll</th><th>Prototyper</th><th class="hide-s">Med sedan</th><th><span class="sr" style="position:absolute;left:-9999px">Åtgärder</span></th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+    box.innerHTML=`<table class="tbl"><thead><tr><th>Person</th><th>Roll</th>${ACC?'<th class="hide-s">GitHub</th>':""}<th>Prototyper</th><th class="hide-s">Med sedan</th><th><span class="sr" style="position:absolute;left:-9999px">Åtgärder</span></th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
     stagger(box.querySelector("tbody"));
     box.querySelectorAll("tr[data-login]").forEach(el=>{ const login=el.dataset.login;
       el.querySelector("[data-role]")?.addEventListener("change",async e=>{ const role=e.target.value;
         try{ await saveTeam(t=>{ const m=t.members.find(x=>x.login===login); if(m) m.role=role; }, `${login} är nu ${role==="admin"?"admin":"designer"}`); toast("Rollen är ändrad"); showTeam(); renderAccount(); }
         catch(x){ alert(ghErr(x)); } });
-      el.querySelector("[data-rm]")?.addEventListener("click",()=>removeMember(login)); });
+      el.querySelector("[data-rm]")?.addEventListener("click",()=>removeMember(login));
+      // Bjud in / skicka igen (en ny inbjudan ersätter den gamla)
+      el.querySelector("[data-inv],[data-reinv]")?.addEventListener("click",async e=>{ e.target.disabled=true;
+        try{ const i=ACC?.inv.get(login.toLowerCase()); if(i) await gh(`/invitations/${i.id}`,{method:"DELETE"}).catch(()=>{});
+          await gh(`/collaborators/${encodeURIComponent(login)}`,{method:"PUT",body:JSON.stringify({permission:"push"})}); toast("Inbjudan är skickad"); showTeam(); }
+        catch(x){ alert(ghErr(x)); e.target.disabled=false; } }); });
   }catch(e){ box.innerHTML=`<div class="err">${esc(ghErr(e))}</div>`; }
 }
 $("#team-add-open").onclick=()=>{
