@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T15:39">
+<meta name="pp-app" content="2026-11-23T15:49">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -136,9 +136,11 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .set-back:hover{color:var(--text)}
 .set-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;align-items:start}
 .set-nav{position:sticky;top:24px;display:flex;flex-direction:column;gap:2px}
+.set-nav{isolation:isolate}
 .set-nav button{display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;border-radius:8px;padding:10px 12px;font:400 16px/1.2 var(--body);color:var(--text)}
 .set-nav button:hover{background:#f1ece5}
-.set-nav button[aria-current="true"]{background:#fff;font-weight:700;box-shadow:0 1px 2px rgba(32,32,32,.1)}
+.set-nav button[aria-current="true"]{font-weight:700}
+.set-nav button[aria-current="true"]:hover{background:none}
 .set-nav button svg{flex:none;color:var(--subtle)}
 .set-nav button[aria-current="true"] svg{color:var(--cta)}
 .set-main{display:flex;flex-direction:column;gap:24px;min-width:0}
@@ -170,7 +172,7 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
   .set-layout{grid-template-columns:1fr;gap:16px}
   .set-head{grid-template-columns:1fr;gap:4px}
   .set-head h2{padding-left:0}
-  .set-nav{position:static;flex-direction:row;overflow-x:auto;gap:4px}
+  .set-nav{position:relative;flex-direction:row;overflow-x:auto;gap:4px}
   .set-nav button{white-space:nowrap}
   .sec{padding:20px}
   .srow{grid-template-columns:1fr}
@@ -223,6 +225,56 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px);opacity:0;background:#202020;color:#fff;padding:10px 16px;border-radius:8px;font-size:15px;transition:.2s;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+
+/* ===== Rörelse =====
+   Samma easing och tider överallt. Vyer glider in i den riktning man rör sig, innehåll tonar in i tur och ordning,
+   bilder tonar in när de är laddade. Minskade animationer i systemet stänger av allt (längst ner). */
+:root{--ease:cubic-bezier(.2,.7,.2,1);--ease-in:cubic-bezier(.4,0,1,1);--t1:.15s;--t2:.28s;--t3:.45s}
+@keyframes pp-rise{from{opacity:0;transform:translateY(12px)}}
+@keyframes pp-fade{from{opacity:0}}
+@keyframes pp-from-r{from{opacity:0;transform:translateX(28px)}}
+@keyframes pp-from-l{from{opacity:0;transform:translateX(-28px)}}
+@keyframes pp-zoom{from{opacity:0;transform:scale(1.06)}}
+@keyframes pp-pop{0%{opacity:0;transform:scale(.5)}60%{opacity:1;transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes pp-shimmer{to{background-position:-200% 0}}
+.enter-fwd{animation:pp-from-r var(--t3) var(--ease) both}
+.enter-back{animation:pp-from-l var(--t3) var(--ease) both}
+.enter-fade{animation:pp-rise var(--t3) var(--ease) both}
+.stagger>*{animation:pp-rise var(--t3) var(--ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+/* Laddning: skimrande platshållare i stället för text */
+.sk{background:linear-gradient(90deg,#efebe4 25%,#f8f5f0 37%,#efebe4 63%);background-size:400% 100%;animation:pp-shimmer 1.4s linear infinite;border-radius:6px}
+.skc{background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);overflow:hidden}
+.skc .sk.img{aspect-ratio:16/10;border-radius:0}
+.skc .b{padding:16px 24px;display:flex;flex-direction:column;gap:10px}
+/* Kort: lyfter vid hover, knapparna glider upp, ikonerna ner */
+.proj,.add{transition:transform var(--t2) var(--ease),box-shadow var(--t2) var(--ease)}
+.proj:hover,.proj:focus-within,.add:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(32,32,32,.13)}
+.proj .ov .main{transform:translateY(10px);transition:transform var(--t2) var(--ease)}
+.proj .tools,.proj .tools-r{transform:translateY(-6px);transition:transform var(--t2) var(--ease)}
+.proj:hover .ov .main,.proj:focus-within .ov .main,.proj:hover .tools,.proj:focus-within .tools,.proj:hover .tools-r,.proj:focus-within .tools-r{transform:none}
+.proj .th img{animation:pp-fade var(--t3) var(--ease) both}
+.ico{transition:background var(--t1),color var(--t1),transform var(--t1) var(--ease)}
+.ico:active,.btn:active{transform:scale(.96)}
+.btn{transition:background var(--t1),border-color var(--t1),color var(--t1),transform var(--t1) var(--ease)}
+/* Sidopanel: bilden zoomar mjukt in */
+.drawer.on .dhero img{animation:pp-zoom .6s var(--ease) both}
+.drawer .dh{animation:none}
+.drawer.on .dh{animation:pp-rise var(--t3) var(--ease) .05s both}
+/* Inställningar: markeringen glider mellan sektionerna */
+.set-nav .ind{position:absolute;left:0;top:0;width:0;height:0;background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);z-index:0;pointer-events:none}
+.set-nav .ind.mv{transition:transform var(--t2) var(--ease),width var(--t2) var(--ease),height var(--t2) var(--ease)}
+.set-nav button{position:relative;z-index:1}
+/* Publicering: steget som pågår tonar in, bocken poppar när det är klart */
+.progress div.on{animation:pp-rise var(--t2) var(--ease) both}
+.result{animation:pp-rise var(--t3) var(--ease) both}
+.okpop{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;align-items:center;justify-content:center;margin-right:10px;vertical-align:-6px;animation:pp-pop .5s var(--ease) .1s both}
+.picked>*{animation:pp-rise var(--t2) var(--ease) both}
+.picked>*:nth-child(2){animation-delay:.06s}.picked>*:nth-child(3){animation-delay:.12s}.picked>*:nth-child(4){animation-delay:.18s}
+#fields{animation:pp-rise var(--t3) var(--ease) .1s both}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .sk{animation:none}
+}
 @media (max-width:520px){.btn{padding:0 14px}.wrap{padding-top:20px}}
 </style>
 </head>
@@ -430,8 +482,20 @@ async function loadTree(){
 }
 
 /* ===== Vyer ===== */
-function view(id){ ["setup","list","pub","settings"].forEach(v=>$("#v-"+v).hidden = v!==id); $("#to-settings").hidden = id==="setup"||id==="settings";
+/* Rörelse: spelar upp en in-animation på nytt, och sätter ordningsnummer för innehåll som tonar in i tur och ordning */
+function play(el, cls){ if(!el) return; el.classList.remove("enter-fwd","enter-back","enter-fade"); void el.offsetWidth; el.classList.add(cls);
+  el.addEventListener("animationend",()=>el.classList.remove(cls),{once:true}); }
+function stagger(el, max=14){ if(!el) return; el.classList.remove("stagger"); const n=el.children.length; [...el.children].forEach((c,i)=>c.style.setProperty("--i",Math.min(i,max))); void el.offsetWidth; el.classList.add("stagger");
+  // tas bort när allt har tonat in, så att hover och andra övergångar fungerar som vanligt efteråt
+  clearTimeout(el._stg); el._stg=setTimeout(()=>el.classList.remove("stagger"), Math.min(n,max)*45+500); }
+// Vyernas djup: man glider in från höger när man går djupare, från vänster när man går tillbaka
+const DEPTH={setup:0,list:1,pub:2,settings:2};
+let CUR_VIEW=null;
+function view(id){
+  const prev=CUR_VIEW; CUR_VIEW=id;
+  ["setup","list","pub","settings"].forEach(v=>$("#v-"+v).hidden = v!==id); $("#to-settings").hidden = id==="setup"||id==="settings";
   $("#me").hidden = id==="setup";
+  if(prev!==id) play($("#v-"+id), prev==null ? "enter-fade" : DEPTH[id]>DEPTH[prev] ? "enter-fwd" : DEPTH[id]<DEPTH[prev] ? "enter-back" : "enter-fade");
   window.scrollTo(0,0); }
 
 $$(".js-repo").forEach(el=>el.textContent=repoTxt());
@@ -463,14 +527,28 @@ const SETTINGS=[
   {id:"app",   label:"Appen", show:()=>{}},
 ];
 function openSettings_(sec){
+  const fresh=CUR_VIEW!=="settings";
   view("settings");
-  const cur=SETTINGS.find(x=>x.id===sec)||SETTINGS[0];
-  $("#set-nav").innerHTML=SETTINGS.map(x=>`<button data-sec="${x.id}" aria-current="${x.id===cur.id}">${SET_ICON[x.id]||""}${esc(x.label)}</button>`).join("");
-  $$("#set-nav [data-sec]").forEach(b=>b.onclick=()=>openSettings_(b.dataset.sec));
+  const cur=SETTINGS.find(x=>x.id===sec)||SETTINGS[0], nav=$("#set-nav");
+  if(!nav.querySelector("[data-sec]")){
+    nav.innerHTML=`<span class="ind" aria-hidden="true"></span>`+SETTINGS.map(x=>`<button data-sec="${x.id}">${SET_ICON[x.id]||""}${esc(x.label)}</button>`).join("");
+    $$("#set-nav [data-sec]").forEach(b=>b.onclick=()=>openSettings_(b.dataset.sec));
+  }
+  $$("#set-nav [data-sec]").forEach(b=>b.setAttribute("aria-current", b.dataset.sec===cur.id));
+  moveInd(!fresh);
   $$(".set-main .sec").forEach(el=>el.hidden = el.dataset.sec!==cur.id);
+  if(!fresh) play($(`.set-main .sec[data-sec="${cur.id}"]`), "enter-fade");
   history.replaceState(null,"","#installningar/"+cur.id);
   cur.show();
 }
+// Den vita markeringen i menyn flyttar sig till vald sektion
+function moveInd(animate){
+  const nav=$("#set-nav"), ind=nav.querySelector(".ind"), b=nav.querySelector('[aria-current="true"]'); if(!ind||!b) return;
+  ind.classList.toggle("mv", !!animate);
+  ind.style.width=b.offsetWidth+"px"; ind.style.height=b.offsetHeight+"px";
+  ind.style.transform=`translate(${b.offsetLeft}px,${b.offsetTop}px)`;
+}
+addEventListener("resize",()=>{ if(CUR_VIEW==="settings") moveInd(false); });
 async function renderAccount(){
   if(!ME) return;
   const p=await profile(ME.login), m=member(ME.login), meta=JSON.parse(store.get("meta")||"{}");
@@ -579,6 +657,7 @@ async function showTeam(){
         <td class="act">${adm&&!me?`<button class="ico danger" data-rm title="Ta bort ur teamet" aria-label="Ta bort ${esc(p.name)} ur teamet">${ICON.trash}</button>`:""}</td>
       </tr>`; }));
     box.innerHTML=`<table class="tbl"><thead><tr><th>Person</th><th>Roll</th><th>Prototyper</th><th class="hide-s">Med sedan</th><th><span class="sr" style="position:absolute;left:-9999px">Åtgärder</span></th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+    stagger(box.querySelector("tbody"));
     box.querySelectorAll("tr[data-login]").forEach(el=>{ const login=el.dataset.login;
       el.querySelector("[data-role]")?.addEventListener("change",async e=>{ const role=e.target.value;
         try{ await saveTeam(t=>{ const m=t.members.find(x=>x.login===login); if(m) m.role=role; }, `${login} är nu ${role==="admin"?"admin":"designer"}`); toast("Rollen är ändrad"); showTeam(); renderAccount(); }
@@ -625,7 +704,8 @@ async function removeMember(login){
 const fmtDate = iso => { const d=new Date(iso); return d.toLocaleDateString("sv-SE",{day:"numeric",month:"short",year:"numeric"})+" kl "+d.toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}); };
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 async function showList(){
-  view("list"); const list=$("#list"); list.innerHTML=`<div class="card muted">Hämtar …</div>`;
+  view("list"); const list=$("#list");
+  if(!list.querySelector(".proj")) list.innerHTML=Array.from({length:3},()=>`<div class="skc" aria-hidden="true"><div class="sk img"></div><div class="b"><div class="sk" style="height:18px;width:60%"></div><div class="sk" style="height:12px;width:40%"></div></div></div>`).join("");
   if(!ME) return init();
   const nm=$("#not-member"); nm.hidden=isMember(); nm.innerHTML=`Du (<b>@${esc(ME.login)}</b>) är inte med i UX-teamet än. Be en admin lägga till dig under <b>Inställningar → Team</b>, så kan du publicera.`;
   try{
@@ -643,9 +723,9 @@ async function showList(){
         <div class="th" aria-hidden="true">${name.slice(0,1).toUpperCase()}</div>
         <div class="ov">
           <div class="tools">
-            <button class="ico" data-act="link" title="Kopiera länk" aria-label="Kopiera länk till ${name}">${ICON.link}</button>
             <button class="ico" data-act="hist" title="Versionshistorik" aria-label="Versionshistorik för ${name}" aria-haspopup="dialog">${ICON.hist}</button>
             <button class="ico" data-act="set" title="Inställningar" aria-label="Inställningar för ${name}" aria-haspopup="dialog">${ICON.gear}</button>
+            <button class="ico" data-act="link" title="Kopiera länk" aria-label="Kopiera länk till ${name}">${ICON.link}</button>
           </div>
           ${canDel?`<div class="tools-r"><button class="ico danger" data-act="del" title="Ta bort" aria-label="Ta bort ${name}">${ICON.trash}</button></div>`:""}
           <div class="main">
@@ -660,6 +740,7 @@ async function showList(){
         <div class="u"><span class="js-date">&nbsp;</span></div>
       </div></article>`; }).join("");
     if(ADD_OK){ list.insertAdjacentHTML("afterbegin", ADD_OK); $("#new").onclick=()=>openPublish(null); }
+    stagger(list);
     list.querySelectorAll(".proj").forEach(el=>{
       const slug=el.dataset.slug;
       el.querySelector('[data-act="link"]').onclick=()=>copy(siteUrl(slug),"Länken");
@@ -711,7 +792,7 @@ $("#drawer-x").onclick=closeHistory; $("#drawer-bg").onclick=closeHistory;
 function openDrawer(title, sub, html, from, slug){
   drawerFrom=from; const d=$("#drawer");
   drawerHero(slug);
-  $("#drawer-title").textContent=title; $("#drawer-sub").textContent=sub; $("#drawer-list").innerHTML=html;
+  $("#drawer-title").textContent=title; $("#drawer-sub").textContent=sub; $("#drawer-list").innerHTML=html; stagger($("#drawer-list"));
   d.hidden=false; requestAnimationFrame(()=>{ d.classList.add("on"); $("#drawer-bg").classList.add("on"); });
   document.removeEventListener("keydown",drawerKeys); document.addEventListener("keydown",drawerKeys); $("#drawer-x").focus();
 }
@@ -792,6 +873,7 @@ async function openHistory(slug, from){
         <div class="by js-vby" data-login="${esc(c.author?.login||"")}" style="margin-top:4px"></div></div>
         <div class="b"><button class="btn small" data-h="open">Öppna</button>${i===0?"":`<button class="btn small" data-h="restore">Återställ</button>`}</div></div>`; }).join("")
       || `<div class="muted small" style="padding:16px 0">Ingen historik hittades.</div>`;
+    stagger(box);
     box.querySelectorAll(".js-vby").forEach(el=>byLine(el, el.dataset.login, "av"));
     box.querySelectorAll(".v").forEach(v=>{
       v.querySelector('[data-h="open"]').onclick=()=>openVersion(slug, v.dataset.sha);
@@ -1274,7 +1356,7 @@ async function waitLive(slug, stamp, sha){
 }
 function showResult(slug,name,pw,live){
   const url=siteUrl(slug), r=$("#result"); r.hidden=false;
-  r.innerHTML = `<h2 style="margin:0">${live?"Klart! Prototypen är publicerad":"Uppladdad. GitHub publicerar den strax"}</h2>
+  r.innerHTML = `<h2 style="margin:0">${live?`<span class="okpop" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Klart! Prototypen är publicerad`:"Uppladdad. GitHub publicerar den strax"}</h2>
     ${live?"":`<p class="small" style="margin:0">Det tar ibland några minuter. Länken fungerar så fort GitHub är klar.</p>`}
     <div class="u">${esc(url)}</div>
     <div class="row"><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a>
