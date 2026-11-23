@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T14:27">
+<meta name="pp-app" content="2026-11-23T14:52">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -41,6 +41,7 @@ h2{margin:0 0 6px;font:700 20px/1.2 var(--head)}
 .muted{color:var(--subtle)}
 .small{font-size:14px}
 .btn{height:44px;padding:0 20px;border-radius:999px;border:2px solid var(--text);background:none;font:700 16px/1 var(--head);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+a.btn{text-decoration:none}
 .btn.primary{background:var(--cta);border-color:var(--cta);color:#fff}
 .btn.primary:hover{background:var(--cta-press);border-color:var(--cta-press)}
 .btn.small{height:36px;padding:0 14px;font-size:14px;border-width:1.5px}
@@ -65,7 +66,7 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
    vitt, 8 px rundning, skugga 0 1px 2px, bild i full bredd överst, innehåll 16 × 24 px, rubrik Thomas Headline 19 px med pil */
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
 .list>.err,.list>.muted{grid-column:1/-1}
-.add{align-self:stretch;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fff;border:0;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);color:var(--cta);transition:box-shadow .15s}
+.add{align-self:stretch;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fff;border:0;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);color:var(--cta);transition:box-shadow .15s}
 .add:hover{box-shadow:0 2px 10px rgba(32,32,32,.14)}
 .add svg{transition:transform .15s}
 .add:hover svg{transform:scale(1.08)}
@@ -74,17 +75,33 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .proj{background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);overflow:hidden;display:flex;flex-direction:column}
 .proj .th{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;background:#f2efea;color:#b5aea4;font:700 40px/1 var(--head);overflow:hidden}
 .proj .th img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
-.proj .th:hover img{transform:scale(1.03)}
 .proj .th .mk{font:400 14px/1.3 var(--body);color:var(--subtle)}
+/* Hover-lager över bilden: två huvudknappar i mitten, ikoner uppe till höger */
+.proj .media{position:relative}
+.proj .ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(32,32,32,.5);opacity:0;transition:opacity .18s}
+.proj:hover .ov,.proj:focus-within .ov{opacity:1}
+.proj:hover .th img,.proj:focus-within .th img{transform:scale(1.03)}
+.proj .ov .main{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 16px}
+.proj .ov .btn{height:42px;padding:0 18px;font-size:15px;border-width:2px}
+.proj .ov .btn.light{background:#fff;border-color:#fff;color:var(--text)}
+.proj .ov .btn.light:hover{background:#f2efea;border-color:#f2efea}
+.proj .ov .btn svg{flex:none}
+.proj .tools{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.ico{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.95);color:var(--text);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:background .15s,color .15s}
+.ico:hover{background:#fff;color:var(--cta)}
+.ico.danger:hover{color:var(--err)}
+.ico:focus-visible,.proj .ov .btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media (hover:none){.proj .ov{opacity:1;background:linear-gradient(rgba(32,32,32,.35),rgba(32,32,32,.15))}}
+/* Inställningspanelen för en prototyp */
+.set-row{padding:16px 0;border-bottom:1px solid #eee9e2;display:flex;flex-direction:column;gap:8px}
+.set-row:last-child{border-bottom:0}
+.set-row .k{font-weight:700}
+.set-row .val{font:400 16px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;background:#f7f5f1;border-radius:6px;padding:8px 10px}
 .proj .pc{padding:16px 24px;display:flex;flex-direction:column;gap:6px}
 .proj .t{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;font:700 19px/1.1 var(--head);color:var(--text)}
 .proj .t svg{flex:none}
 .proj .t:hover span{text-decoration:underline}
 .proj .u{font-size:14px;color:var(--subtle)}
-.proj .acts{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px;padding-top:12px;border-top:1px solid #eee9e2}
-.proj .acts button{background:none;border:0;padding:2px 0;font:400 15px/1.3 var(--body);color:var(--text);text-decoration:underline;text-underline-offset:2px}
-.proj .acts button:hover{color:var(--cta)}
-.proj .acts .del{color:var(--err)}
 /* Sidopanel för versionshistorik */
 .drawer-bg{position:fixed;inset:0;background:rgba(32,32,32,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
 .drawer-bg.on{opacity:1;pointer-events:auto}
@@ -231,7 +248,7 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 </div>
 <div class="drawer-bg" id="drawer-bg"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-h" hidden>
-  <div class="dh"><h2 id="drawer-h">Versionshistorik<span class="sub" id="drawer-sub"></span></h2>
+  <div class="dh"><h2 id="drawer-h"><span id="drawer-title">Versionshistorik</span><span class="sub" id="drawer-sub"></span></h2>
     <button class="x" id="drawer-x" aria-label="Stäng"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="db"><div class="hist" id="drawer-list"></div></div>
 </aside>
@@ -333,23 +350,30 @@ async function showList(){
     const CHEV='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>';
     list.innerHTML = items.map(p=>{ const url=esc(siteUrl(p.slug)), name=esc(meta[p.slug]?.name||p.slug);
       return `<article class="proj" data-slug="${esc(p.slug)}">
-      <a class="th" href="${url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">${name.slice(0,1).toUpperCase()}</a>
+      <div class="media">
+        <div class="th" aria-hidden="true">${name.slice(0,1).toUpperCase()}</div>
+        <div class="ov">
+          <div class="tools">
+            <button class="ico" data-act="link" title="Kopiera länk" aria-label="Kopiera länk till ${name}">${ICON.link}</button>
+            <button class="ico" data-act="hist" title="Versionshistorik" aria-label="Versionshistorik för ${name}" aria-haspopup="dialog">${ICON.hist}</button>
+            <button class="ico" data-act="set" title="Inställningar" aria-label="Inställningar för ${name}" aria-haspopup="dialog">${ICON.gear}</button>
+            <button class="ico danger" data-act="del" title="Ta bort" aria-label="Ta bort ${name}">${ICON.trash}</button>
+          </div>
+          <div class="main">
+            <a class="btn primary" href="${url}" target="_blank" rel="noopener">${ICON.play}Prototyp</a>
+            <button class="btn light" data-act="update">Ny version</button>
+          </div>
+        </div>
+      </div>
       <div class="pc">
         <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna prototypen"><span>${name}</span>${CHEV}</a>
         <div class="u"><span class="js-date">&nbsp;</span></div>
-        <div class="acts">
-          <button data-act="link">Kopiera länk</button>
-          ${meta[p.slug]?.pw?`<button data-act="pw">Kopiera lösenord</button>`:""}
-          <button data-act="update">Ny version</button>
-          <button data-act="hist" aria-haspopup="dialog">Versionshistorik</button>
-          <button data-act="del" class="del">Ta bort</button>
-        </div>
       </div></article>`; }).join("");
     list.insertAdjacentHTML("afterbegin", ADD); $("#new").onclick=()=>openPublish(null);
     list.querySelectorAll(".proj").forEach(el=>{
       const slug=el.dataset.slug;
       el.querySelector('[data-act="link"]').onclick=()=>copy(siteUrl(slug),"Länken");
-      el.querySelector('[data-act="pw"]')?.addEventListener("click",()=>copy(meta[slug].pw,"Lösenordet"));
+      el.querySelector('[data-act="set"]').onclick=e=>openSettings(slug, e.currentTarget);
       el.querySelector('[data-act="update"]').onclick=()=>openPublish(slug);
       el.querySelector('[data-act="del"]').onclick=()=>removeProject(slug);
       el.querySelector('[data-act="hist"]').onclick=e=>openHistory(slug, e.currentTarget);
@@ -359,6 +383,13 @@ async function showList(){
     });
   }catch(e){ list.innerHTML=`<div class="card err">${esc(ghErr(e))}</div>`; if(e.status===401) view("setup"); }
 }
+const ICON={
+  play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>',
+  link:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>',
+  hist:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8.3"/><path d="M3 3.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/></svg>',
+  gear:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+};
 /* ===== Versionshistorik: varje publicering är en version (en commit i repot) ===== */
 async function ghRaw(path){
   const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}${path}`,{headers:{Authorization:`Bearer ${store.get("token")}`,Accept:"application/vnd.github.raw","X-GitHub-Api-Version":"2022-11-28"}});
@@ -383,12 +414,32 @@ function drawerKeys(e){
     else if(!e.shiftKey && document.activeElement===f.at(-1)){ e.preventDefault(); f[0].focus(); } }
 }
 $("#drawer-x").onclick=closeHistory; $("#drawer-bg").onclick=closeHistory;
-async function openHistory(slug, from){
-  drawerFrom=from; const meta=JSON.parse(store.get("meta")||"{}"), box=$("#drawer-list"), d=$("#drawer");
-  $("#drawer-sub").textContent=meta[slug]?.name||slug;
-  box.innerHTML=`<div class="muted small" style="padding:16px 0">Hämtar versioner …</div>`;
+function openDrawer(title, sub, html, from){
+  drawerFrom=from; const d=$("#drawer");
+  $("#drawer-title").textContent=title; $("#drawer-sub").textContent=sub; $("#drawer-list").innerHTML=html;
   d.hidden=false; requestAnimationFrame(()=>{ d.classList.add("on"); $("#drawer-bg").classList.add("on"); });
-  document.addEventListener("keydown",drawerKeys); $("#drawer-x").focus();
+  document.removeEventListener("keydown",drawerKeys); document.addEventListener("keydown",drawerKeys); $("#drawer-x").focus();
+}
+/* Inställningar per prototyp: länk och lösenord */
+function openSettings(slug, from){
+  const meta=JSON.parse(store.get("meta")||"{}"), m=meta[slug]||{}, url=siteUrl(slug);
+  openDrawer("Inställningar", m.name||slug, `
+    <div class="set-row"><span class="k">Länk</span><span class="val">${esc(url)}</span>
+      <div class="row"><button class="btn small" id="s-link">Kopiera länk</button><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a></div></div>
+    <div class="set-row"><span class="k">Lösenord</span>
+      ${m.pw?`<span class="val" id="s-pw" data-on="0">••••••••••••</span>
+      <div class="row"><button class="btn small" id="s-pwcopy">Kopiera lösenord</button><button class="btn small" id="s-pwshow">Visa</button></div>
+      <span class="hint" style="margin:0">Skicka lösenordet separat från länken.</span>`
+      :`<span class="hint" style="margin:0">Appen känner inte till lösenordet på den här datorn. Det sparas här nästa gång du publicerar en ny version.</span>`}</div>
+    <div class="set-row"><span class="k">Adress</span><span class="val">${esc(slug)}</span>
+      <span class="hint" style="margin:0">Adressen går inte att ändra. Vill du ha en ny, ladda upp prototypen som en ny prototyp.</span></div>`, from);
+  $("#s-link").onclick=()=>copy(url,"Länken");
+  if(m.pw){ $("#s-pwcopy").onclick=()=>copy(m.pw,"Lösenordet");
+    $("#s-pwshow").onclick=()=>{ const v=$("#s-pw"), on=v.dataset.on==="1"; v.dataset.on=on?"0":"1"; v.textContent=on?"••••••••••••":m.pw; $("#s-pwshow").textContent=on?"Visa":"Dölj"; }; }
+}
+async function openHistory(slug, from){
+  const meta=JSON.parse(store.get("meta")||"{}"), box=$("#drawer-list");
+  openDrawer("Versionshistorik", meta[slug]?.name||slug, `<div class="muted small" style="padding:16px 0">Hämtar versioner …</div>`, from);
   try{
     const cs=(await gh(`/commits?path=${encodeURIComponent(slug+"/index.html")}&sha=${CFG.branch}&per_page=50`)).filter(c=>!/^Ta bort /.test(c.commit.message));
     const total=cs.length;
