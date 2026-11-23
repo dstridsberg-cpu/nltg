@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:31">
+<meta name="pp-app" content="2026-11-23T16:38">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -238,6 +238,12 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px);opacity:0;background:#202020;color:#fff;padding:10px 16px;border-radius:8px;font-size:15px;transition:.2s;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+/* Rullistor: egen pil och samma form som fälten, i stället för webbläsarens */
+select{-webkit-appearance:none;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23202020' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/14px 14px!important;padding:0 38px 0 12px!important;border:1px solid #8f8f8f;border-radius:8px!important;font:400 16px/1 var(--body);color:var(--text);cursor:pointer;transition:border-color var(--t1),box-shadow var(--t1)}
+select:hover{border-color:#5f5f5f}
+select:focus-visible{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px rgba(76,127,129,.25)}
+select:disabled{opacity:.55;cursor:default;background-color:#f7f5f1!important}
+.tbl select{height:38px;min-width:132px}
 /* Välkomststegen */
 .onb{list-style:none;margin:4px 0 0;padding:0;counter-reset:onb;display:flex;flex-direction:column;gap:18px}
 .onb li{counter-increment:onb;display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start}
@@ -385,6 +391,7 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
           <div class="hint" id="t-hint" style="margin:0;max-width:340px">Skapas automatiskt från prototypens första sida. Syns bara i den här listan och krypteras med lösenordet.</div></div></div>
       <div><label for="f-note">Vad är nytt? <span class="muted" style="font-weight:400">(valfritt)</span></label><input type="text" id="f-note" autocomplete="off" maxlength="140">
         <div class="hint">Syns i versionshistoriken, t.ex. "Lagt till Banköverföring".</div></div>
+      <div class="notice js-vault-hint" style="margin:0" hidden>Du har inte låst upp med teamlösenordet på den här datorn. Prototypen publiceras ändå, men teamet ser inte tumnageln förrän du har låst upp.</div>
       <div><button class="btn primary" id="publish">Publicera</button></div>
     </div>
 
@@ -728,12 +735,20 @@ async function saveVault(change){
     catch(e){ if(e.status!==409 && e.status!==422) throw e; VAULT=null; await loadVault(); }
   }
 }
+// Lägger in lösenord som den här datorn känner till men som saknas i valvet (t.ex. om man publicerade innan man låst upp)
+async function syncVaultMissing(){
+  if(!VAULT || !isMember()) return;
+  const meta=JSON.parse(store.get("meta")||"{}");
+  const add=Object.entries(meta).filter(([k,m])=>m.pw && !VAULT.passwords[k] && TREE.some(p=>p.slug===k));
+  if(!add.length) return;
+  try{ await saveVault(v=>{ for(const [k,m] of add) v.passwords[k]=m.pw; }); toast(add.length===1?`Lösenordet till ${nameOf(add[0][0])} delas nu med teamet`:`${add.length} lösenord delas nu med teamet`); }catch(e){}
+}
 const vaultPut = (slug,pw) => saveVault(v=>{ v.passwords[slug]=pw; }).catch(()=>{});
 const vaultDel = slug => saveVault(v=>{ delete v.passwords[slug]; }).catch(()=>{});
 const strongPw = () => [0,1,2].map(()=>WORDS[rnd(WORDS.length)]).join("-")+"-"+(1000+rnd(9000));
 async function unlockVault(pw){
   store.set("teamkey",pw); await loadVault();
-  if(!VAULT){ store.set("teamkey",null); return false; } return true;
+  if(!VAULT){ store.set("teamkey",null); return false; } await syncVaultMissing(); return true;
 }
 function syncVaultBanner(){ const b=$("#vault-lock"); if(b) b.hidden = !(VAULT_EXISTS && !VAULT && isMember()); }
 $("#vl-go").onclick=async()=>{ const pw=$("#vl-pw").value.trim(), err=$("#vl-err"); err.textContent=""; if(!pw) return;
@@ -883,6 +898,7 @@ async function showList(){
   const nm=$("#not-member"); nm.hidden=isMember() && ACCESS?.ok!==false; nm.innerHTML = !isMember() ? `Du (<b>@${esc(ME.login)}</b>) är inte med i UX-teamet än. Be en admin lägga till dig under <b>Inställningar → Team</b>, så kan du publicera.` : ACCESS.html;
   try{
     let items = await loadTree(); await loadInfo();
+    syncVaultMissing();
     if(FILTER==="mine") items=items.filter(p=>INFO[p.slug]?.createdBy?.toLowerCase()===ME.login.toLowerCase());
     const ADD=`<button class="add" id="new"><svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M28 12v32M12 28h32"/></svg><span>Ladda upp ny prototyp</span></button>`;
     const ADD_OK = isMember() ? ADD : "";
@@ -1223,6 +1239,7 @@ function openPublish(slug){
     : meta[slug]?.pw ? "Samma lösenord som förra gången, så teamet behöver inget nytt."
     : "Appen vet inte vilket lösenord som användes förra gången. Skriv in det gamla om teamet ska kunna fortsätta använda det.";
   ["picked","fields","progress","result"].forEach(id=>$("#"+id).hidden=true); $("#pub-err").textContent="";
+  $(".js-vault-hint").hidden = !(VAULT_EXISTS && !VAULT);
   $("#publish").disabled=false; $("#drop").hidden=false; syncSlug(); view("pub");
 }
 $("#pub-back").onclick=()=>showList();
@@ -1537,6 +1554,7 @@ function showResult(slug,name,pw,live){
     <div class="row"><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a>
       <button class="btn small" id="r-link">Kopiera länk</button><button class="btn small" id="r-pw">Kopiera lösenord</button></div>
     <p class="small muted" style="margin:0">Lösenord: <b>${esc(pw)}</b>. Skicka det separat från länken, t.ex. i ett eget meddelande.</p>
+    ${VAULT_EXISTS&&!VAULT?`<div class="notice" style="margin:0"><b>Teamet ser inte tumnageln än.</b> Lås upp med teamlösenordet (rutan överst i listan), så delas lösenordet med teamet automatiskt.</div>`:""}
     <div><button class="btn primary" id="r-done">Till listan</button></div>`;
   $("#r-link").onclick=()=>copy(url,"Länken"); $("#r-pw").onclick=()=>copy(pw,"Lösenordet"); $("#r-done").onclick=()=>showList();
 }
