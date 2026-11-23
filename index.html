@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:38">
+<meta name="pp-app" content="2026-11-23T16:49">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -665,9 +665,27 @@ async function loadInfo(){
   INFO={};
   await Promise.all(paths.map(async x=>{ const slug=x.path.split("/")[0]; const j=await getJson(x.path).catch(()=>null); if(j) INFO[slug]={...j.data, _sha:j.sha}; }));
 }
+/* Flera filer i EN commit, så att GitHub bara bygger sajten en gång (varje commit startar en ny publicering
+   som avbryter den förra). files: [{path, b64}] (b64=null tar bort filen). Returnerar commitens sha. */
+async function commitFiles(files, message){
+  for(let attempt=0; attempt<3; attempt++){
+    const ref=await gh(`/git/ref/heads/${CFG.branch}`), head=ref.object.sha;
+    const base=(await gh(`/git/commits/${head}`)).tree.sha;
+    const tree=await Promise.all(files.map(async f=>({path:f.path, mode:"100644", type:"blob",
+      sha: f.b64==null ? null : (await gh(`/git/blobs`,{method:"POST",body:JSON.stringify({content:f.b64,encoding:"base64"})})).sha })));
+    const t=await gh(`/git/trees`,{method:"POST",body:JSON.stringify({base_tree:base, tree})});
+    const c=await gh(`/git/commits`,{method:"POST",body:JSON.stringify({message, tree:t.sha, parents:[head]})});
+    try{ await gh(`/git/refs/heads/${CFG.branch}`,{method:"PATCH",body:JSON.stringify({sha:c.sha})}); return c.sha; }
+    catch(e){ if(e.status!==422 && e.status!==409) throw e; }   // någon annan hann före: gör om på nytt underlag
+  }
+  throw new Error("Repot ändrades samtidigt av någon annan. Försök igen.");
+}
 async function saveInfo(slug, patch){
   const cur=INFO[slug]||{}; const next={...cur, ...patch}; delete next._sha;
-  const sha=await putJson(`${slug}/info.json`, next, cur._sha, `Info för ${slug}`);
+  let sha;
+  try{ sha=await putJson(`${slug}/info.json`, next, cur._sha, `Info för ${slug}`); }
+  catch(e){ if(e.status!==409 && e.status!==422) throw e;            // filen har ändrats (t.ex. vid publicering): hämta aktuell version och försök igen
+    const now=await getJson(`${slug}/info.json`); sha=await putJson(`${slug}/info.json`, next, now?.sha, `Info för ${slug}`); }
   INFO[slug]={...next, _sha:sha};
 }
 // Prototyper utan info.json (publicerade innan teamstödet): skaparen hämtas från första versionen
@@ -1214,9 +1232,8 @@ async function updateApp(file){
 async function removeProject(slug){
   if(!confirm(`Ta bort ${nameOf(slug)}? Länken slutar fungera för alla som har den.`)) return;
   const p=TREE.find(x=>x.slug===slug);
-  try{ await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"DELETE",body:JSON.stringify({message:`Ta bort ${slug}`,sha:p.sha,branch:CFG.branch})});
-    if(p.thumb) await gh(`/contents/${encodeURIComponent(slug)}/tumnagel.bin`,{method:"DELETE",body:JSON.stringify({message:`Ta bort tumnagel för ${slug}`,sha:p.thumb,branch:CFG.branch})}).catch(()=>{});
-    if(INFO[slug]?._sha) await gh(`/contents/${encodeURIComponent(slug)}/info.json`,{method:"DELETE",body:JSON.stringify({message:`Ta bort info för ${slug}`,sha:INFO[slug]._sha,branch:CFG.branch})}).catch(()=>{});
+  try{ const t=(await gh(`/git/trees/${CFG.branch}?recursive=1`)).tree||[];
+    await commitFiles(t.filter(x=>x.type!=="tree" && x.path.startsWith(slug+"/")).map(x=>({path:x.path, b64:null})), `Ta bort ${slug}`);
     const meta=JSON.parse(store.get("meta")||"{}"); delete meta[slug]; store.set("meta",JSON.stringify(meta)); vaultDel(slug); toast("Borttagen"); showList(); }
   catch(e){ alert(ghErr(e)); }
 }
@@ -1331,7 +1348,9 @@ async function bake(files){
     h = await inlineExternal(h);
     h = await dynamicAssets(h, base);
     // Kvar: lokala filer som inte fanns, och saker som hämtas från nätet
-    for(const [,u] of h.matchAll(/(?:src|href)=["']([^"']+)["']/gi)){
+    // Bara riktiga src/href-attribut (inte t.ex. data-href) och bara värden som ser ut som filer (har en filändelse)
+    for(const [,u] of h.matchAll(/(?<![\w-])(?:src|href)=["']([^"'<>]+)["']/gi)){
+      if(!/\.[a-z0-9]{2,5}$/i.test(u.split(/[?#]/)[0]) || /\$\{|\s/.test(u)) continue;
       const fp=norm(base+u.split(/[?#]/)[0]);
       if(isLocal(u) && !pages.includes(fp) && !/\.html?$/i.test(fp) && !byPath.has(fp)) missing.add(u); }
     for(const [,host] of h.matchAll(/(?:src=["']|url\(["']?)https?:\/\/([^/"')]+)/gi)) external.add(host);
@@ -1514,15 +1533,23 @@ $("#publish").onclick = async () => {
     const page=(await lock(SRC.html, pw, name)).replace("<head>",`<head><meta name="pp-build" content="${stamp}">`);
     step(1);
     const content=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.readAsDataURL(new Blob([page])); });
-    const put=await gh(`/contents/${encodeURIComponent(slug)}/index.html`,{method:"PUT",body:JSON.stringify({message:`${existing?"Uppdatera":"Publicera"} ${name}${$("#f-note").value.trim()?": "+$("#f-note").value.trim():""}`,content,branch:CFG.branch,...(existing?{sha:existing.sha}:{})})});
-    const meta=JSON.parse(store.get("meta")||"{}"), oldPw=meta[slug]?.pw; meta[slug]={name,pw}; store.set("meta",JSON.stringify(meta));
-    vaultPut(slug, pw);
+    const meta=JSON.parse(store.get("meta")||"{}"), oldPw=meta[slug]?.pw;
     const now=new Date().toISOString();
-    await saveInfo(slug, existing && INFO[slug] ? {name, updatedBy:ME.login, updatedAt:now} : {name, createdBy:INFO[slug]?.createdBy||ME.login, createdAt:INFO[slug]?.createdAt||now, updatedBy:ME.login, updatedAt:now}).catch(()=>{});
+    const info={...(INFO[slug]||{}), name, createdBy:INFO[slug]?.createdBy||ME.login, createdAt:INFO[slug]?.createdAt||now, updatedBy:ME.login, updatedAt:now}; delete info._sha;
+    // Tumnagel: ny bild, eller den gamla omlåst om lösenordet har bytts
     if(THUMB_P) await THUMB_P;
-    await putThumb(slug, pw, oldPw).catch(()=>toast("Tumnageln kunde inte laddas upp"));
+    let thumb=THUMB, curThumb=TREE.find(p=>p.slug===slug)?.thumb;
+    if(!thumb && curThumb && oldPw && oldPw!==pw) thumb=await openThumb(await ghRaw(`/contents/${encodeURIComponent(slug)}/tumnagel.bin?ref=${CFG.branch}`), oldPw).catch(()=>null);
+    // Valvet: lösenordet delas med teamet om valvet är upplåst här
+    let vault=null; if(VAULT && store.get("teamkey")){ const v={...VAULT, passwords:{...VAULT.passwords, [slug]:pw}}; vault={v, bytes:await sealThumb(new Blob([JSON.stringify(v)]), store.get("teamkey"))}; }
+    const files=[{path:`${slug}/index.html`, b64:content}, {path:`${slug}/info.json`, b64:utf8b64(JSON.stringify(info,null,2)+"\n")}];
+    if(thumb) files.push({path:`${slug}/tumnagel.bin`, b64:b64(await sealThumb(thumb,pw))});
+    if(vault) files.push({path:"hub/vault.bin", b64:b64(vault.bytes)});
+    const commitSha=await commitFiles(files, `${existing?"Uppdatera":"Publicera"} ${name}${$("#f-note").value.trim()?": "+$("#f-note").value.trim():""}`);
+    meta[slug]={name,pw}; store.set("meta",JSON.stringify(meta));
+    INFO[slug]=info; if(vault) VAULT=vault.v;
     await ensurePages();
-    step(2); const live=await waitLive(slug, stamp, put.commit?.sha);
+    step(2); const live=await waitLive(slug, stamp, commitSha);
     $("#progress").hidden=true; showResult(slug,name,pw,live);
     loadTree().catch(()=>{});
   }catch(e){ err.textContent=e.status?ghErr(e):"Något gick fel: "+e.message;
