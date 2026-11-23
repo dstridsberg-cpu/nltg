@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T13:20">
+<meta name="pp-app" content="2026-11-23T14:05">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -69,6 +69,7 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .add:hover{box-shadow:0 2px 10px rgba(32,32,32,.14)}
 .add svg{transition:transform .15s}
 .add:hover svg{transform:scale(1.08)}
+.add span{font:700 19px/1.1 var(--head);color:var(--text)}
 .add:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .proj{background:#fff;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);overflow:hidden;display:flex;flex-direction:column}
 .proj .th{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;background:#f2efea;color:#b5aea4;font:700 40px/1 var(--head);overflow:hidden}
@@ -161,7 +162,7 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
   <!-- 3. Publicera -->
   <section id="v-pub" class="card stack" hidden>
     <div class="top" style="margin:0">
-      <h2 style="margin:0" id="pub-h">Publicera ny prototyp</h2>
+      <h2 style="margin:0" id="pub-h">Ladda upp ny prototyp</h2>
       <button class="link" id="pub-back">Tillbaka</button>
     </div>
 
@@ -309,7 +310,7 @@ async function showList(){
   view("list"); const list=$("#list"); list.innerHTML=`<div class="card muted">Hämtar …</div>`;
   try{
     const items = await loadTree();
-    const ADD=`<button class="add" id="new" aria-label="Publicera ny prototyp" title="Publicera ny prototyp"><svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M28 12v32M12 28h32"/></svg></button>`;
+    const ADD=`<button class="add" id="new"><svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M28 12v32M12 28h32"/></svg><span>Ladda upp ny prototyp</span></button>`;
     if(!items.length){ list.innerHTML=ADD; $("#new").onclick=()=>openPublish(null); return; }
     const meta = JSON.parse(store.get("meta")||"{}");
     const CHEV='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>';
@@ -529,7 +530,7 @@ let SRC=null, FIXED_SLUG=null, slugTouched=false;
 function openPublish(slug){
   SRC=null; FIXED_SLUG=slug; slugTouched=!!slug;
   const meta=JSON.parse(store.get("meta")||"{}");
-  $("#pub-h").textContent = slug ? `Ny version av ${meta[slug]?.name||slug}` : "Publicera ny prototyp";
+  $("#pub-h").textContent = slug ? `Ny version av ${meta[slug]?.name||slug}` : "Ladda upp ny prototyp";
   $("#f-name").value = slug ? (meta[slug]?.name||slug) : ""; $("#f-slug").value = slug||""; $("#f-slug").disabled=!!slug;
   $("#f-pw").value = (slug && meta[slug]?.pw) || newPw(); $("#f-note").value="";
   setThumb(null); THUMB_P=null; $("#t-hint").textContent="Skapas automatiskt från prototypens första sida. Syns bara i den här listan och krypteras med lösenordet.";
@@ -625,12 +626,63 @@ async function bake(files){
       if(!byPath.has(fp)){ missing.add(u); return m; } used.add(fp);
       return `<style>${await css(await readText(byPath.get(fp)), dirOf(fp))}</style>`; });
     h = await inlineAssets(h, base);
+    h = await inlineExternal(h);
+    h = await dynamicAssets(h, base);
     // Kvar: lokala filer som inte fanns, och saker som hämtas från nätet
     for(const [,u] of h.matchAll(/(?:src|href)=["']([^"']+)["']/gi)){
       const fp=norm(base+u.split(/[?#]/)[0]);
       if(isLocal(u) && !pages.includes(fp) && !/\.html?$/i.test(fp) && !byPath.has(fp)) missing.add(u); }
     for(const [,host] of h.matchAll(/(?:src=["']|url\(["']?)https?:\/\/([^/"')]+)/gi)) external.add(host);
+    for(const pf of coveredPrefixes) for(const m of [...missing]) if(m.startsWith(pf)||norm(base+m).startsWith(norm(base+pf))) missing.delete(m);
     return h;
+  }
+
+  /* Filer på nätet (typsnitt, bilder) bakas in om servern tillåter det (CORS), t.ex. idun.nltg.com och img.ving.se */
+  const extCache=new Map(), extDone=new Set();
+  const ASSET_URL=/https?:\/\/[^\s"'`()<>\\]+/g, ASSET_EXT=/\.(png|jpe?g|gif|webp|avif|svg|woff2?|ttf|otf)(?:[?#]|$)|\/image\/upload\//i;
+  async function fetchAsset(raw){
+    const url=raw.replace(/&amp;/g,"&");
+    if(!extCache.has(raw)) extCache.set(raw,(async()=>{
+      const r=await fetch(url,{mode:"cors",credentials:"omit"}); if(!r.ok) return null;
+      const b=await r.blob(); if(!b.size || b.size>8e6) return null;
+      const type=(b.type&&b.type!=="application/octet-stream")?b.type:(MIME[ext(url.split(/[?#]/)[0])]||"image/jpeg");
+      return await readDataUrl(b,type);
+    })().catch(()=>null));
+    return extCache.get(raw);
+  }
+  async function inlineExternal(text){
+    const urls=[...new Set([...text.matchAll(ASSET_URL)].map(m=>m[0]).filter(u=>ASSET_EXT.test(u)))].slice(0,300);
+    for(let i=0;i<urls.length;i+=6){
+      const got=await Promise.all(urls.slice(i,i+6).map(async u=>[u,await fetchAsset(u)]));
+      for(const [u,d] of got) if(d){ text=text.split(u).join(d); extDone.add(new URL(u.replace(/&amp;/g,"&")).hostname); }
+    }
+    return text;
+  }
+  /* Bilder vars sökväg byggs ihop i koden, t.ex. 'img/map/'+z+'/'+x+'.png' eller `img/app-${n}.jpg`:
+     alla filer under den början läggs i en tabell, och ett litet skript byter adressen när bilden dyker upp på sidan */
+  const coveredPrefixes=new Set(); let dynCount=0;
+  async function dynamicAssets(text, base){
+    const prefixes=new Set();
+    // en sökväg som slutar med / eller - och direkt följs av ' + eller ${ (sökvägen kan stå inne i en html-sträng)
+    for(const m of text.matchAll(/((?:\.\/)?[\w.-]+(?:\/[\w.-]+)*[\/-])["'`]\s*\+/g)) if(m[1].includes("/")) prefixes.add(m[1]);
+    for(const m of text.matchAll(/((?:\.\/)?[\w.-]+(?:\/[\w.-]+)*[\/-])\$\{/g)) if(m[1].includes("/")) prefixes.add(m[1]);
+    const map={}; let bytes=0;
+    for(const pf of prefixes){
+      const np=norm(base+pf)+(pf.endsWith("/")?"/":"");
+      const hits=[...byPath.keys()].filter(p=>p.startsWith(np) && MIME[ext(p)] && !["css","js","json"].includes(ext(p)) && !/\.html?$/i.test(p));
+      if(!hits.length) continue; coveredPrefixes.add(pf);
+      for(const p of hits){ if(bytes>40e6) break; const key=base&&p.startsWith(base)?p.slice(base.length):p; if(map[key]) continue; map[key]=await dataUrl(p); bytes+=map[key].length; dynCount++; }
+    }
+    if(!Object.keys(map).length) return text;
+    const js=`<script>(function(){var A=${JSON.stringify(map).replace(/<\//g,"<\\/")};
+function k(u){return String(u||"").replace(/^\\.\\//,"").split(/[?#]/)[0];}
+function fx(u){var d=A[k(u)];return d||u;}
+function el(e){if(!e||e.nodeType!==1)return;["src","href","poster"].forEach(function(a){var v=e.getAttribute(a);if(v&&A[k(v)])e.setAttribute(a,A[k(v)]);});
+var s=e.getAttribute("style");if(s&&s.indexOf("url(")>-1){var n=s.replace(/url\\((['"]?)([^'")]+)\\1\\)/g,function(m,q,u){return A[k(u)]?'url("'+A[k(u)]+'")':m;});if(n!==s)e.setAttribute("style",n);}}
+var d=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");Object.defineProperty(HTMLImageElement.prototype,"src",{get:d.get,set:function(v){d.set.call(this,fx(v));},configurable:true});
+new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==="attributes")el(m.target);else m.addedNodes.forEach(function(n){el(n);if(n.querySelectorAll)n.querySelectorAll("[src],[href],[style],[poster]").forEach(el);});});}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["src","href","style","poster"]});
+})();<\/script>`;
+    return /<head[^>]*>/i.test(text) ? text.replace(/<head[^>]*>/i, m=>m+js) : js+text;
   }
 
   const out={};
@@ -656,7 +708,7 @@ addEventListener("message",e=>{if(e.source===pv.contentWindow&&e.data&&e.data.pv
 show(decodeURIComponent(location.hash.slice(1))+".html");<\/script></body></html>`;
   }
   const title = (out[pages[0]].match(/<title>([^<]*)<\/title>/i)||[])[1]||"";
-  return {html, first:out[pages[0]], pages, used:[...used], missing:[...missing], external:[...external], title:title.trim()};
+  return {html, first:out[pages[0]], pages, used:[...used], missing:[...missing], external:[...external], extDone:[...extDone], dynCount, dynPrefixes:[...coveredPrefixes], title:title.trim()};
 }
 async function replaceAsync(str, re, fn){
   const parts=[]; let last=0;
@@ -729,8 +781,10 @@ async function useFiles(files, rootName){
     const kb=n=>n>1e6?(n/1e6).toFixed(1)+" MB":Math.round(n/1e3)+" kB";
     pk.innerHTML = `<span class="ok">✓ ${b.pages.length===1?`1 sida: ${esc(b.pages[0])}`:`${b.pages.length} sidor: ${b.pages.map(esc).join(", ")}`}</span>
       <span class="ok">✓ ${b.used.length} filer bakas in (bilder, typsnitt, skript), totalt ${kb(new Blob([b.html]).size)}</span>
+      ${b.dynCount?`<span class="ok">✓ ${b.dynCount} bilder som koden visar (${b.dynPrefixes.map(esc).join(", ")}) är med</span>`:""}
+      ${b.extDone.length?`<span class="ok">✓ Typsnitt och bilder från ${b.extDone.map(esc).join(", ")} är inbakade</span>`:""}
       ${b.missing.length?`<span class="warn">⚠ Hittades inte i mappen: ${b.missing.slice(0,6).map(esc).join(", ")}${b.missing.length>6?" …":""}</span>`:""}
-      ${b.external.length?`<span class="warn">⚠ Hämtas från nätet när man öppnar: ${b.external.map(esc).join(", ")}</span>`:""}`;
+      ${b.external.length?`<span class="warn">⚠ Laddas från nätet när någon öppnar prototypen (fungerar när man är uppkopplad): ${b.external.map(esc).join(", ")}</span>`:""}`;
     if(!FIXED_SLUG){ $("#f-name").value = b.title.replace(/\s*[–-]\s*v?\d.*$/,"") || rootName; if(!slugTouched) $("#f-slug").value=slugify($("#f-name").value); }
     $("#fields").hidden=false; syncSlug(); $("#f-name").focus();
   }catch(e){ pk.innerHTML=""; pk.hidden=true; $("#pub-err").textContent="Kunde inte läsa prototypen: "+e.message; }
@@ -738,7 +792,9 @@ async function useFiles(files, rootName){
 
 /* --- Publicera --- */
 const STEPS=["Låser med lösenordet","Laddar upp till GitHub","GitHub publicerar sidan (brukar ta 1–2 minuter)"];
-function step(i){ const pr=$("#progress"); pr.hidden=false; pr.innerHTML=STEPS.map((t,j)=>`<div class="${j<i?"done":j===i?"on":""}">${t}</div>`).join(""); }
+let stepT=null;
+function step(i){ const pr=$("#progress"); pr.hidden=false; pr.innerHTML=STEPS.map((t,j)=>`<div class="${j<i?"done":j===i?"on":""}">${t}${j===i?' <span class="js-secs" style="font-weight:400;color:var(--subtle)"></span>':""}</div>`).join("");
+  clearInterval(stepT); const t0=Date.now(); stepT=setInterval(()=>{ const el=pr.querySelector(".js-secs"); if(!el||pr.hidden) return clearInterval(stepT); const s=Math.round((Date.now()-t0)/1000); if(s>=3) el.textContent=`(${s} s)`; },1000); }
 const wait = ms => new Promise(r=>setTimeout(r,ms));
 $("#publish").onclick = async () => {
   const name=$("#f-name").value.trim(), slug=FIXED_SLUG||slugify($("#f-slug").value||name), pw=$("#f-pw").value.trim(), err=$("#pub-err");
@@ -775,7 +831,9 @@ async function waitLive(slug, stamp, sha){
   const t0=Date.now();
   while(Date.now()-t0 < 4*60e3){
     await wait(6000);
-    try{ const r=await fetch(siteUrl(slug)+"?v="+stamp,{cache:"no-store"}); if(r.ok && (await r.text()).includes(stamp)) return true; }catch(e){}
+    // Läser bara början av sidan (där versionsmärket står); går inte det läses hela
+    try{ const u=siteUrl(slug)+"?v="+stamp; let r; try{ r=await fetch(u,{cache:"no-store",headers:{Range:"bytes=0-4095"}}); }catch(e){ r=await fetch(u,{cache:"no-store"}); }
+      if(r.ok && (await r.text()).slice(0,8000).includes(stamp)) return true; }catch(e){}
     try{ const b=await gh("/pages/builds/latest"); if(b.status==="built" && (!sha || b.commit===sha)) { await wait(4000); return true; } if(b.status==="errored") return false; }catch(e){}
   }
   return false;
