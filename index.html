@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:08">
+<meta name="pp-app" content="2026-11-23T16:16">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -234,6 +234,13 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px);opacity:0;background:#202020;color:#fff;padding:10px 16px;border-radius:8px;font-size:15px;transition:.2s;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 [hidden]{display:none!important}
+/* Välkomststegen */
+.onb{list-style:none;margin:4px 0 0;padding:0;counter-reset:onb;display:flex;flex-direction:column;gap:18px}
+.onb li{counter-increment:onb;display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start}
+.onb li::before{content:counter(onb);width:36px;height:36px;border-radius:50%;background:#fff3ea;color:var(--cta);display:flex;align-items:center;justify-content:center;font:700 17px/1 var(--head)}
+.onb li>div{display:flex;flex-direction:column;gap:2px;padding-top:6px}
+.onb li>div>b:first-child{font:700 18px/1.2 var(--head)}
+.onb li span{color:var(--subtle);font-size:15px}
 
 /* ===== Rörelse =====
    Samma easing och tider överallt. Vyer glider in i den riktning man rör sig, innehåll tonar in i tur och ordning,
@@ -297,27 +304,23 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
 
   <!-- 1. Första gången: koppla till GitHub -->
   <section id="v-setup" class="card stack" hidden>
-    <h2>Koppla appen till GitHub (görs en gång)</h2>
-    <p class="muted" style="margin:0">Appen behöver en nyckel för att få lägga upp prototyper i ditt repo <b class="js-repo"></b>. Nyckeln sparas bara i den här webbläsaren.</p>
-    <div class="notice" style="margin:0">Äger någon annan repot och du är inbjuden till det? Då fungerar inte den vanliga nyckeltypen.
-      Skapa i stället en <a id="tok-classic" target="_blank" rel="noopener"><b>klassisk nyckel med rätt behörighet ifylld</b></a>: välj hur länge den ska gälla, klicka på <b>Generate token</b> längst ner och klistra in nyckeln (börjar med <code>ghp_</code>) nedan.
-      Glöm inte att först acceptera inbjudan till repot.</div>
-    <p style="margin:0"><b>Äger du repot?</b> Gör så här:</p>
-    <ol class="steps">
-      <li><a id="tok-link" target="_blank" rel="noopener">Öppna sidan för nya nycklar på GitHub</a> (öppnas i en ny flik).</li>
-      <li>Skriv ett namn, t.ex. <code>Prototyper</code>, och välj hur länge den ska gälla (t.ex. ett år).</li>
-      <li>Under <b>Repository access</b>: välj <b>Only select repositories</b> och välj <b class="js-repo"></b>.</li>
-      <li>Under <b>Permissions → Repository permissions</b>: sätt <b>Contents</b> till <b>Read and write</b> och <b>Pages</b> till <b>Read and write</b>. Är du admin för teamet: sätt även <b>Administration</b> till <b>Read and write</b>, så kan appen bjuda in kollegor åt dig.</li>
-      <li>Klicka på <b>Generate token</b>, kopiera nyckeln (börjar med <code>github_pat_</code>) och klistra in den här:</li>
+    <h2 style="font-size:26px;margin:0">Välkommen till UX-hub</h2>
+    <p class="muted" style="margin:0">Du loggar in med en nyckel från GitHub. Det tar en minut och görs bara en gång på den här datorn.</p>
+    <ol class="onb">
+      <li><div><b>Skapa en nyckel på GitHub</b>
+        <span>Rätt inställningar är redan ifyllda. Välj hur länge den ska gälla, scrolla ner och klicka på den gröna knappen <b>Generate token</b>.</span>
+        <a class="btn primary small" id="tok-classic" target="_blank" rel="noopener" style="margin-top:10px;align-self:flex-start">Skapa nyckel på GitHub ↗</a></div></li>
+      <li><div><b>Kopiera nyckeln</b><span>Den börjar med <code>ghp_</code> och visas bara en gång.</span></div></li>
+      <li><div><b>Klistra in den här</b>
+        <div class="row" style="margin-top:8px"><input type="password" id="tok" autocomplete="off" spellcheck="false" placeholder="ghp_…" aria-label="GitHub-nyckel"><button class="btn primary" id="tok-save">Logga in</button></div>
+        <div class="err" id="tok-err" role="alert"></div></div></li>
     </ol>
-    <div>
-      <label for="tok">GitHub-nyckel</label>
-      <div class="row"><input type="password" id="tok" autocomplete="off" spellcheck="false" placeholder="github_pat_… eller ghp_…"><button class="btn primary" id="tok-save">Spara</button></div>
-      <div class="err" id="tok-err" role="alert"></div>
-    </div>
+    <p class="small muted" style="margin:0">Har du blivit inbjuden till UX-hub? <a id="tok-inv" target="_blank" rel="noopener">Acceptera inbjudan på GitHub</a> först, annars kan du inte publicera.</p>
     <details class="small muted">
-      <summary>Annat repo?</summary>
+      <summary>Avancerat</summary>
       <div class="stack" style="margin-top:10px">
+        <p style="margin:0">Äger du repot kan du i stället använda en <a id="tok-link" target="_blank" rel="noopener">finmaskig nyckel</a> som bara får röra <b class="js-repo"></b>:
+          Repository access → Only select repositories → <b class="js-repo"></b>. Permissions: <b>Contents</b>, <b>Pages</b> och (för admins) <b>Administration</b> till Read and write.</p>
         <div><label for="cfg-owner">GitHub-konto</label><input type="text" id="cfg-owner" spellcheck="false"></div>
         <div><label for="cfg-repo">Repo</label><input type="text" id="cfg-repo" spellcheck="false"></div>
       </div>
@@ -480,7 +483,7 @@ async function gh(path, opt={}){
   return j;
 }
 const ghErr = e => e.status===401 ? "GitHub-nyckeln fungerar inte längre (fel eller utgången). Skapa en ny under Inställningar."
-  : e.status===403 || e.status===404 ? `Nyckeln saknar behörighet till ${repoTxt()}. Äger du repot: kontrollera att det är valt och att Contents och Pages har Read and write. Är du inbjuden: acceptera inbjudan på GitHub och använd en klassisk nyckel (se guiden).`
+  : e.status===403 || e.status===404 ? `Nyckeln saknar behörighet till ${repoTxt()}. Äger du repot: kontrollera att det är valt och att Contents och Pages har Read and write. Är du inbjuden: acceptera inbjudan på GitHub först.`
   : e.message==="Failed to fetch" ? "Kunde inte nå GitHub. Är du uppkopplad?" : "GitHub svarade: "+e.message;
 
 /* Projekt = mappar i repots rot som har en index.html */
@@ -516,6 +519,8 @@ $$(".js-repo").forEach(el=>el.textContent=repoTxt());
 $("#cfg-owner").value=CFG.owner; $("#cfg-repo").value=CFG.repo;
 $("#tok-link").href = "https://github.com/settings/personal-access-tokens/new";
 $("#tok-classic").href = "https://github.com/settings/tokens/new?scopes=public_repo&description=UX-hub";
+$("#tok-inv").href = `https://github.com/${CFG.owner}/${CFG.repo}/invitations`;
+$("#tok").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#tok-save").click(); });
 
 /* --- Koppla till GitHub --- */
 $("#tok-save").onclick = async () => {
