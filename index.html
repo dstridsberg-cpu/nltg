@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:00">
+<meta name="pp-app" content="2026-11-23T16:08">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -299,6 +299,10 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
   <section id="v-setup" class="card stack" hidden>
     <h2>Koppla appen till GitHub (görs en gång)</h2>
     <p class="muted" style="margin:0">Appen behöver en nyckel för att få lägga upp prototyper i ditt repo <b class="js-repo"></b>. Nyckeln sparas bara i den här webbläsaren.</p>
+    <div class="notice" style="margin:0">Äger någon annan repot och du är inbjuden till det? Då fungerar inte den vanliga nyckeltypen.
+      Skapa i stället en <a id="tok-classic" target="_blank" rel="noopener"><b>klassisk nyckel med rätt behörighet ifylld</b></a>: välj hur länge den ska gälla, klicka på <b>Generate token</b> längst ner och klistra in nyckeln (börjar med <code>ghp_</code>) nedan.
+      Glöm inte att först acceptera inbjudan till repot.</div>
+    <p style="margin:0"><b>Äger du repot?</b> Gör så här:</p>
     <ol class="steps">
       <li><a id="tok-link" target="_blank" rel="noopener">Öppna sidan för nya nycklar på GitHub</a> (öppnas i en ny flik).</li>
       <li>Skriv ett namn, t.ex. <code>Prototyper</code>, och välj hur länge den ska gälla (t.ex. ett år).</li>
@@ -308,7 +312,7 @@ header .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--su
     </ol>
     <div>
       <label for="tok">GitHub-nyckel</label>
-      <div class="row"><input type="password" id="tok" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn primary" id="tok-save">Spara</button></div>
+      <div class="row"><input type="password" id="tok" autocomplete="off" spellcheck="false" placeholder="github_pat_… eller ghp_…"><button class="btn primary" id="tok-save">Spara</button></div>
       <div class="err" id="tok-err" role="alert"></div>
     </div>
     <details class="small muted">
@@ -476,7 +480,7 @@ async function gh(path, opt={}){
   return j;
 }
 const ghErr = e => e.status===401 ? "GitHub-nyckeln fungerar inte längre (fel eller utgången). Skapa en ny under Inställningar."
-  : e.status===403 || e.status===404 ? `Nyckeln saknar behörighet till ${repoTxt()}. Kontrollera att repot är valt och att Contents och Pages har Read and write.`
+  : e.status===403 || e.status===404 ? `Nyckeln saknar behörighet till ${repoTxt()}. Äger du repot: kontrollera att det är valt och att Contents och Pages har Read and write. Är du inbjuden: acceptera inbjudan på GitHub och använd en klassisk nyckel (se guiden).`
   : e.message==="Failed to fetch" ? "Kunde inte nå GitHub. Är du uppkopplad?" : "GitHub svarade: "+e.message;
 
 /* Projekt = mappar i repots rot som har en index.html */
@@ -511,6 +515,7 @@ function view(id){
 $$(".js-repo").forEach(el=>el.textContent=repoTxt());
 $("#cfg-owner").value=CFG.owner; $("#cfg-repo").value=CFG.repo;
 $("#tok-link").href = "https://github.com/settings/personal-access-tokens/new";
+$("#tok-classic").href = "https://github.com/settings/tokens/new?scopes=public_repo&description=UX-hub";
 
 /* --- Koppla till GitHub --- */
 $("#tok-save").onclick = async () => {
@@ -701,7 +706,7 @@ async function addMember(){
     let invited=false; try{ await gh(`/collaborators/${encodeURIComponent(u.login)}`,{method:"PUT",body:JSON.stringify({permission:"push"})}); invited=true; }catch(e){}
     $("#team-add").hidden=true; await showTeam();
     if(invited) toast(`${u.name||u.login} är tillagd och har fått en inbjudan till repot på GitHub`);
-    else alert(`${u.name||u.login} är tillagd i teamet.\n\nFör att kunna publicera behöver hen också bjudas in till repot på GitHub:\nhttps://github.com/${CFG.owner}/${CFG.repo}/settings/access\n(Add people → ${u.login} → Write).\n\nVill du att appen gör det åt dig nästa gång: ge din nyckel behörigheten Administration: Read and write.`);
+    else alert(`${u.name||u.login} är tillagd i teamet.\n\nFör att kunna publicera behöver hen också bjudas in till repot på GitHub:\n1. Öppna https://github.com/${CFG.owner}/${CFG.repo}/settings/access\n2. Add people → sök ${u.login} → Add to repository\n3. ${u.login} accepterar inbjudan (mejl från GitHub) och kopplar huben med en egen nyckel.\n\nVill du att huben skickar inbjudan åt dig nästa gång: redigera din nyckel på GitHub och sätt Administration till Read and write.`);
   }catch(e){ err.textContent = e.message==="nouser" ? "Hittade ingen GitHub-användare med det namnet." : ghErr(e); $("#add-go").disabled=false; }
 }
 async function removeMember(login){
