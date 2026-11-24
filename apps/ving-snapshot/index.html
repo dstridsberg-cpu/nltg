@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="sv">
-<head><meta name="pp-build" content="mwurhuho">
+<head><meta name="pp-build" content="mwut2vt6">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -34,7 +34,8 @@ header p{margin:0;color:var(--subtle);max-width:560px}
 /* Fyra kolumner: steg 1 | steg 2 | steg 3 | Figma */
 .cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto 1fr;gap:28px 24px;align-items:start}
 .cols>header{grid-column:1 / span 3;grid-row:1}
-.cols>section.col{grid-column:1 / span 3;grid-row:2}
+.cols>section.col{grid-column:1 / span 3;grid-row:2;align-self:stretch}
+.cols>section.col>.slider{flex:1}   /* slidern blir minst lika hög som Figma-kolumnen */
 .cols>aside.col{grid-column:4;grid-row:1 / span 2;align-self:stretch}
 .cols .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:stretch}
 .cols .step{padding:24px;gap:8px}
@@ -110,7 +111,8 @@ aside.col textarea.code{background:#2c2c2c;border-color:#444;color:#e8e4de}
 .s-tabs button:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
 .s-bar{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;background:#efe9e1;overflow:hidden}
 .s-bar i{display:block;height:100%;width:33.334%;background:var(--cta);border-radius:2px;transition:transform .45s var(--ease)}
-.s-view{overflow:hidden}
+.s-view{overflow:hidden;flex:1;display:flex;flex-direction:column}
+.s-view>.s-track{flex:1}
 .s-track{display:flex;transition:transform .55s var(--ease)}
 .slide{flex:0 0 100%;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:40px;align-items:center;padding:8px 4px 4px;opacity:0;transition:opacity .45s}
 .slide.on{opacity:1}
