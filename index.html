@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-24T14:33">
+<meta name="pp-app" content="2026-11-24T14:38">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -90,8 +90,8 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .proj .ov .btn.light{background:#fff;border-color:#fff;color:var(--text)}
 .proj .ov .btn.light:hover{background:#f2efea;border-color:#f2efea}
 .proj .ov .btn svg{flex:none}
-.proj .tools{position:absolute;top:20px;left:20px;display:flex;gap:6px}
-.proj .tools-r{position:absolute;top:20px;right:20px}
+.proj .tools{position:absolute;top:10px;left:10px;display:flex;gap:6px}
+.proj .tools-r{position:absolute;top:10px;right:10px}
 .ico{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.95);color:var(--text);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:background .15s,color .15s}
 .ico:hover{background:#fff;color:var(--cta)}
 .ico.danger:hover{color:var(--err)}
@@ -107,7 +107,8 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .proj .t svg{flex:none}
 /* Appar: ikonen i stället för skärmdump */
 .proj .th.ic{background:#fff5e8}
-.proj .th.cv{background-size:cover;background-position:center top}
+.proj .th.cv{position:relative;isolation:isolate}
+.proj .th.cv::before{content:"";position:absolute;inset:-12px;z-index:-1;background:inherit;background-size:cover;background-position:center top;filter:blur(4px)}   /* lätt blurrad kortbild */
 .proj .th.cv .app-big{border-radius:50%;box-shadow:0 6px 24px rgba(32,32,32,.28)}
 .proj .th .app-big{width:34%;max-width:120px;height:auto;aspect-ratio:1;object-fit:contain;animation:none;transition:transform var(--t2) var(--ease)}
 .proj:hover .th .app-big,.proj:focus-within .th .app-big{transform:scale(1.06)}
@@ -1037,8 +1038,8 @@ function openAppSettings(slug, from){
     <div class="set-row"><span class="k">Tillagd</span><span class="by" id="a-created"></span><span class="small muted">${i.createdAt?esc(fmtDate(i.createdAt)):""}</span></div>
     <div class="set-row"><span class="k">Länk</span><span class="val">${esc(url)}</span>
       <div class="row"><button class="btn small" id="a-link">Kopiera länk</button><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a></div></div>`, from);
-  const hero=$("#drawer-hero"); hero.hidden=false; hero.style.background=i.icon?(i.cover?`center top/cover url('${i.cover}')`:"#fff5e8"):"";
-  hero.innerHTML = i.icon ? `<img src="${esc(i.icon)}" alt="" style="width:30%;height:auto;object-fit:contain">` : APPS.find(a=>a.slug===slug)?.thumb ? `<img src="${esc(url)}tumnagel.jpg" alt="">` : esc((i.name||slug).slice(0,1).toUpperCase());
+  const hero=$("#drawer-hero"); hero.hidden=false; hero.style.background=i.icon&&!i.cover?"#fff5e8":""; hero.style.position="relative"; hero.style.overflow="hidden";
+  hero.innerHTML = i.icon ? `${i.cover?`<div style="position:absolute;inset:-14px;background:center top/cover url('${esc(i.cover)}');filter:blur(4px)"></div>`:""}<img src="${esc(i.icon)}" alt="" style="position:relative;width:30%;height:auto;object-fit:contain;border-radius:50%;${i.cover?"box-shadow:0 6px 24px rgba(32,32,32,.28)":""}">` : APPS.find(a=>a.slug===slug)?.thumb ? `<img src="${esc(url)}tumnagel.jpg" alt="">` : esc((i.name||slug).slice(0,1).toUpperCase());
   byLine($("#a-created"), i.createdBy, "");
   $("#a-link").onclick=()=>copy(url,"Länken");
   const n=$("#a-name"), d=$("#a-desc"), sv=$("#a-save");
