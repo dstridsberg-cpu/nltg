@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="sv">
-<head><meta name="pp-build" content="mwupb8uh">
+<head><meta name="pp-build" content="mwuq6kpg">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Ving Snapshot</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PCEtLSBBcHBzeW1ib2w6IHZpdCBpa29uIHDDpSBjaXJrZWwgaSBWaW5nLWxvZ290eXBlbnMgb3JhbmdlICgjZmU4YzAwLCBmcsOlbiBWaW5nX2xvZ29fcHJpbWFyeV9vcmFuZ2VfUkdCKSAtLT48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIyNCIgZmlsbD0iI2ZlOGMwMCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkuNiA5LjYpIHNjYWxlKDEuMikiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTMgNy41VjVhMiAyIDAgMCAxIDItMmgyLjVNMTYuNSAzSDE5YTIgMiAwIDAgMSAyIDJ2Mi41TTIxIDE2LjVWMTlhMiAyIDAgMCAxLTIgMmgtMi41TTcuNSAyMUg1YTIgMiAwIDAgMS0yLTJ2LTIuNSIvPjxwYXRoIGQ9Ik0xMiA3LjV2OE04Ljc1IDEyLjUgMTIgMTUuNzVsMy4yNS0zLjI1Ii8+PC9nPjwvc3ZnPgo=" type="image/svg+xml">
 <!--
   Ving Snapshot i UX-hub: en enkel sida i tre steg (installera bokmärket, kopiera en sida, ev. Figma).
   Källa: ux-hub-appar/ving-snapshot/index.src.html. build.py lägger in bokmärkeskoden från
@@ -24,10 +25,12 @@ a{color:inherit}
 main{max-width:none;margin:0;padding:48px 40px 80px;display:flex;flex-direction:column;gap:28px}
 header .k{margin:0;color:var(--subtle);font:700 14px/1 var(--body);letter-spacing:.08em;text-transform:uppercase}
 header h1{margin:8px 0 6px;font:700 40px/1.05 var(--head)}
+header h1.apph{display:flex;align-items:center;gap:14px}
+header h1.apph img{width:48px;height:48px;flex:none}
 header p{margin:0;color:var(--subtle);max-width:560px}
 /* Två kolumner: HTML-prototyper (huvudspåret) och Figma (eget spår) */
 /* Fyra kolumner: steg 1 | steg 2 | steg 3 | Figma */
-.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 24px;align-items:start}
+.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto 1fr;gap:28px 24px;align-items:start}
 .cols>header{grid-column:1 / span 3;grid-row:1}
 .cols>section.col{grid-column:1 / span 3;grid-row:2}
 .cols>aside.col{grid-column:4;grid-row:1 / span 2;align-self:stretch}
@@ -266,7 +269,7 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
   <div class="cols">
   <header>
     <p class="k">UX-hub · App</p>
-    <h1>Ving Snapshot</h1>
+    <h1 class="apph"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PCEtLSBBcHBzeW1ib2w6IHZpdCBpa29uIHDDpSBjaXJrZWwgaSBWaW5nLWxvZ290eXBlbnMgb3JhbmdlICgjZmU4YzAwLCBmcsOlbiBWaW5nX2xvZ29fcHJpbWFyeV9vcmFuZ2VfUkdCKSAtLT48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIyNCIgZmlsbD0iI2ZlOGMwMCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkuNiA5LjYpIHNjYWxlKDEuMikiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTMgNy41VjVhMiAyIDAgMCAxIDItMmgyLjVNMTYuNSAzSDE5YTIgMiAwIDAgMSAyIDJ2Mi41TTIxIDE2LjVWMTlhMiAyIDAgMCAxLTIgMmgtMi41TTcuNSAyMUg1YTIgMiAwIDAgMS0yLTJ2LTIuNSIvPjxwYXRoIGQ9Ik0xMiA3LjV2OE04Ljc1IDEyLjUgMTIgMTUuNzVsMy4yNS0zLjI1Ii8+PC9nPjwvc3ZnPgo=" alt="" width="48" height="48">Ving Snapshot</h1>
     <p>Spara en exakt HTML-kopia av vilken Ving-sida som helst, precis som du ser den. Fungerar även bakom inloggning och i testmiljöer.</p>
   </header>
   <section class="col">
@@ -310,7 +313,7 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
       <div class="inst" aria-hidden="true">
         <div class="inst-win"><div class="chrome"><div class="tabs"><span class="dots"><i></i><i></i><i></i></span><span class="tab"><b class="fav"></b>UX-hub · Ving Snapshot</span></div>
           <div class="bar"><span class="nav">‹ ›</span><span class="addr">dstridsberg-cpu.github.io/nltg/apps/ving-snapshot</span></div>
-          <div class="bms"><span class="bmk o">Figma</span><span class="bmk o">Jira</span><span class="bmk o">Confluence</span><span class="bmk drop"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></b>Ving Snapshot</span></div></div>
+          <div class="bms"><span class="bmk o">Figma</span><span class="bmk o">Jira</span><span class="bmk o">Confluence</span><span class="bmk drop"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a2 2 0 0 1 2-2h2.5M16.5 3H19a2 2 0 0 1 2 2v2.5M21 16.5V19a2 2 0 0 1-2 2h-2.5M7.5 21H5a2 2 0 0 1-2-2v-2.5"/><path d="M12 7.5v8M8.75 12.5 12 15.75l3.25-3.25"/></svg></b>Ving Snapshot</span></div></div>
           <div class="inst-page"><span class="inst-btn"></span></div></div>
         <span class="inst-ghost">⋮⋮ Ving Snapshot</span>
         <svg class="inst-cur" viewBox="0 0 24 24"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#202020" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
@@ -332,7 +335,7 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
             <div class="chrome">
               <div class="tabs"><span class="dots"><i></i><i></i><i></i></span><span class="tab"><b class="fav"></b>Ving – Resor &amp; semester</span></div>
               <div class="bar"><span class="nav">‹ ›</span><span class="addr">ving.se</span><span class="dl" id="dl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16"/></svg></span></div>
-              <div class="bms"><span class="bmk o">Figma</span><span class="bmk o">Jira</span><span class="bmk o">Confluence</span><span class="bmk" id="bmk"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></b>Ving Snapshot</span></div>
+              <div class="bms"><span class="bmk o">Figma</span><span class="bmk o">Jira</span><span class="bmk o">Confluence</span><span class="bmk" id="bmk"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5V5a2 2 0 0 1 2-2h2.5M16.5 3H19a2 2 0 0 1 2 2v2.5M21 16.5V19a2 2 0 0 1-2 2h-2.5M7.5 21H5a2 2 0 0 1-2-2v-2.5"/><path d="M12 7.5v8M8.75 12.5 12 15.75l3.25-3.25"/></svg></b>Ving Snapshot</span></div>
             </div>
             <div class="page">
               <div class="vhead"><span class="vlogo"></span><span class="vnav"><i></i><i></i><i></i><i></i></span><span class="vbtn"></span></div>

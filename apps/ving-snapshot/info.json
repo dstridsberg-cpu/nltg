@@ -4,6 +4,7 @@
   "createdBy": "dstridsberg-cpu",
   "createdAt": "2026-11-24T10:06:06.985Z",
   "updatedBy": "dstridsberg-cpu",
-  "updatedAt": "2026-11-24T12:59:05.225Z",
-  "start": "index.html"
+  "updatedAt": "2026-11-24T13:23:26.932Z",
+  "start": "index.html",
+  "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PCEtLSBBcHBzeW1ib2w6IHZpdCBpa29uIHDDpSBjaXJrZWwgaSBWaW5nLWxvZ290eXBlbnMgb3JhbmdlICgjZmU4YzAwLCBmcsOlbiBWaW5nX2xvZ29fcHJpbWFyeV9vcmFuZ2VfUkdCKSAtLT48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIyNCIgZmlsbD0iI2ZlOGMwMCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkuNiA5LjYpIHNjYWxlKDEuMikiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTMgNy41VjVhMiAyIDAgMCAxIDItMmgyLjVNMTYuNSAzSDE5YTIgMiAwIDAgMSAyIDJ2Mi41TTIxIDE2LjVWMTlhMiAyIDAgMCAxLTIgMmgtMi41TTcuNSAyMUg1YTIgMiAwIDAgMS0yLTJ2LTIuNSIvPjxwYXRoIGQ9Ik0xMiA3LjV2OE04Ljc1IDEyLjUgMTIgMTUuNzVsMy4yNS0zLjI1Ii8+PC9nPjwvc3ZnPgo="
 }
