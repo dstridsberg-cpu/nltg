@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-23T16:49">
+<meta name="pp-app" content="2026-11-24T10:27">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -356,6 +356,9 @@ select:disabled{opacity:.55;cursor:default;background-color:#f7f5f1!important}
     <div class="top"><h2 style="margin:0">Publicerade prototyper</h2>
 </div>
     <div class="list" id="list"><div class="card muted">Hämtar …</div></div>
+    <div class="top" style="margin-top:40px"><h2 style="margin:0">Appar</h2></div>
+    <p class="small muted" style="margin:-4px 0 14px">Teamets verktyg. Apparna är öppna, utan lösenord, så att de är lätta att använda varje dag.</p>
+    <div class="list" id="apps"></div>
   </section>
 
   <!-- 3. Publicera -->
@@ -383,10 +386,12 @@ select:disabled{opacity:.55;cursor:default;background-color:#f7f5f1!important}
       <div><label for="f-slug">Adress</label><input type="text" id="f-slug" autocomplete="off" spellcheck="false">
         <div class="hint">Länken blir <b id="f-url"></b></div>
         <div class="hint" id="f-exists" hidden>Den här adressen finns redan. Publicerar du ersätts den gamla versionen, länken är densamma.</div></div>
-      <div><label for="f-pw">Lösenord</label>
+      <div id="row-desc" hidden><label for="f-desc">Beskrivning</label><input type="text" id="f-desc" autocomplete="off" maxlength="140">
+        <div class="hint">En mening om vad appen gör. Syns på kortet.</div></div>
+      <div id="row-pw"><label for="f-pw">Lösenord</label>
         <div class="row"><input type="text" id="f-pw" autocomplete="off" spellcheck="false"><button class="btn small" id="f-newpw">Nytt förslag</button></div>
         <div class="hint" id="f-pwhint">Den som öppnar länken måste skriva lösenordet. Utan det går prototypen inte att läsa.</div></div>
-      <div><label>Tumnagel</label>
+      <div id="row-thumb"><label>Tumnagel</label>
         <div class="thumb"><div class="pv" id="t-pv">Ingen bild</div>
           <div class="hint" id="t-hint" style="margin:0;max-width:340px">Skapas automatiskt från prototypens första sida. Syns bara i den här listan och krypteras med lösenordet.</div></div></div>
       <div><label for="f-note">Vad är nytt? <span class="muted" style="font-weight:400">(valfritt)</span></label><input type="text" id="f-note" autocomplete="off" maxlength="140">
@@ -517,12 +522,14 @@ const ghErr = e => e.status===401 ? "GitHub-nyckeln fungerar inte längre (fel e
   : e.message==="Failed to fetch" ? "Kunde inte nå GitHub. Är du uppkopplad?" : "GitHub svarade: "+e.message;
 
 /* Projekt = mappar i repots rot som har en index.html */
-let TREE = [], ROOT_SHA = null;
+let TREE = [], ROOT_SHA = null, APPS = [], APPINFO = {}, PUBKIND = "proto";
 async function loadTree(){
   const t = await gh(`/git/trees/${CFG.branch}?recursive=1`).catch(e=>{ if(e.status===404||e.status===409) return {tree:[]}; throw e; });
   ROOT_SHA = (t.tree||[]).find(x=>x.path==="index.html")?.sha || null;
   const thumbs = new Map((t.tree||[]).filter(x=>/^[^/]+\/tumnagel\.bin$/.test(x.path)).map(x=>[x.path.split("/")[0], x.sha]));
   TREE = (t.tree||[]).filter(x=>/^[^/]+\/index\.html$/.test(x.path)).map(x=>({slug:x.path.split("/")[0], sha:x.sha, thumb:thumbs.get(x.path.split("/")[0])||null}));
+  const athumb=new Set((t.tree||[]).filter(x=>/^apps\/[^/]+\/tumnagel\.jpg$/.test(x.path)).map(x=>x.path.split("/")[1]));
+  APPS = (t.tree||[]).filter(x=>/^apps\/[^/]+\/index\.html$/.test(x.path)).map(x=>{ const slug=x.path.split("/")[1]; return {slug, sha:x.sha, thumb:athumb.has(slug)}; });
   return TREE;
 }
 
@@ -916,7 +923,7 @@ async function showList(){
   const nm=$("#not-member"); nm.hidden=isMember() && ACCESS?.ok!==false; nm.innerHTML = !isMember() ? `Du (<b>@${esc(ME.login)}</b>) är inte med i UX-teamet än. Be en admin lägga till dig under <b>Inställningar → Team</b>, så kan du publicera.` : ACCESS.html;
   try{
     let items = await loadTree(); await loadInfo();
-    syncVaultMissing();
+    syncVaultMissing(); renderApps().catch(()=>{});
     if(FILTER==="mine") items=items.filter(p=>INFO[p.slug]?.createdBy?.toLowerCase()===ME.login.toLowerCase());
     const ADD=`<button class="add" id="new"><svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M28 12v32M12 28h32"/></svg><span>Ladda upp ny prototyp</span></button>`;
     const ADD_OK = isMember() ? ADD : "";
@@ -972,6 +979,78 @@ const ICON={
   upload:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>',
   trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
 };
+/* ===== Appar: teamets verktyg under apps/<adress>/ (öppna, utan lösenord) =====
+   apps/<adress>/index.html (+ ev. fler sidor), info.json = {name, description, createdBy, createdAt, updatedBy, updatedAt}, tumnagel.jpg */
+const appUrl = slug => siteUrl("apps/"+slug);
+async function renderApps(){
+  const box=$("#apps"); if(!box) return;
+  await Promise.all(APPS.map(async a=>{ if(!APPINFO[a.slug]){ const j=await getJson(`apps/${a.slug}/info.json`).catch(()=>null); APPINFO[a.slug]=j?{...j.data,_sha:j.sha}:{name:a.slug}; } }));
+  const ADDAPP = isMember() ? `<button class="add" id="new-app"><svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M28 12v32M12 28h32"/></svg><span>Lägg till app</span></button>` : "";
+  const CHEV='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>';
+  box.innerHTML = ADDAPP + APPS.map(a=>{ const i=APPINFO[a.slug]||{}, url=esc(appUrl(a.slug)), name=esc(i.name||a.slug);
+    const canDel = isMember() && (isAdmin() || (i.createdBy && i.createdBy.toLowerCase()===ME.login.toLowerCase()));
+    return `<article class="proj app" data-app="${esc(a.slug)}">
+      <div class="media">
+        <div class="th" aria-hidden="true">${a.thumb?`<img src="${url}tumnagel.jpg?v=${esc(a.sha.slice(0,7))}" alt="" onerror="this.parentNode.textContent='${name.slice(0,1).toUpperCase()}'">`:name.slice(0,1).toUpperCase()}</div>
+        <div class="ov">
+          <div class="tools">
+            <button class="ico" data-act="set" title="Inställningar" aria-label="Inställningar för ${name}" aria-haspopup="dialog">${ICON.gear}</button>
+            <button class="ico" data-act="link" title="Kopiera länk" aria-label="Kopiera länk till ${name}">${ICON.link}</button>
+          </div>
+          ${canDel?`<div class="tools-r"><button class="ico danger" data-act="del" title="Ta bort" aria-label="Ta bort ${name}">${ICON.trash}</button></div>`:""}
+          <div class="main">
+            <a class="btn primary" href="${url}" target="_blank" rel="noopener">${ICON.play}Öppna</a>
+            ${isMember()?`<button class="btn light" data-act="update">${ICON.upload}Ny version</button>`:""}
+          </div>
+        </div>
+      </div>
+      <div class="pc">
+        <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna appen"><span>${name}</span>${CHEV}</a>
+        ${i.description?`<div class="u" style="color:var(--text);font-size:15px">${esc(i.description)}</div>`:""}
+        <div class="by js-by">&nbsp;</div>
+      </div></article>`; }).join("");
+  $("#new-app")?.addEventListener("click",()=>openPublish(null,"app"));
+  box.querySelectorAll("[data-app]").forEach(el=>{ const slug=el.dataset.app, i=APPINFO[slug]||{};
+    el.querySelector('[data-act="link"]').onclick=()=>copy(appUrl(slug),"Länken");
+    el.querySelector('[data-act="set"]').onclick=e=>openAppSettings(slug, e.currentTarget);
+    el.querySelector('[data-act="update"]')?.addEventListener("click",()=>openPublish(slug,"app"));
+    el.querySelector('[data-act="del"]')?.addEventListener("click",()=>removeApp(slug));
+    if(i.createdBy) byLine(el.querySelector(".js-by"), i.createdBy, "Tillagd av"); else el.querySelector(".js-by").textContent="";
+  });
+  stagger(box);
+}
+function openAppSettings(slug, from){
+  const i=APPINFO[slug]||{}, url=appUrl(slug), can=isMember();
+  openDrawer("Inställningar", i.name||slug, `
+    <div class="set-row"><label class="k" for="a-name" style="margin:0">Namn</label>
+      ${can?`<input type="text" id="a-name" value="${esc(i.name||slug)}" maxlength="80" autocomplete="off">`:`<span>${esc(i.name||slug)}</span>`}</div>
+    <div class="set-row"><label class="k" for="a-desc" style="margin:0">Beskrivning</label>
+      ${can?`<input type="text" id="a-desc" value="${esc(i.description||"")}" maxlength="140" autocomplete="off">`:`<span>${esc(i.description||"")}</span>`}
+      ${can?`<div><button class="btn small" id="a-save" disabled>Spara</button></div>`:""}</div>
+    <div class="set-row"><span class="k">Tillagd</span><span class="by" id="a-created"></span><span class="small muted">${i.createdAt?esc(fmtDate(i.createdAt)):""}</span></div>
+    <div class="set-row"><span class="k">Länk</span><span class="val">${esc(url)}</span>
+      <div class="row"><button class="btn small" id="a-link">Kopiera länk</button><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a></div></div>`, from);
+  $("#drawer-hero").hidden=false; $("#drawer-hero").innerHTML = APPS.find(a=>a.slug===slug)?.thumb ? `<img src="${esc(url)}tumnagel.jpg" alt="">` : esc((i.name||slug).slice(0,1).toUpperCase());
+  byLine($("#a-created"), i.createdBy, "");
+  $("#a-link").onclick=()=>copy(url,"Länken");
+  const n=$("#a-name"), d=$("#a-desc"), sv=$("#a-save");
+  if(sv){ const dirty=()=>{ sv.disabled = !n.value.trim() || (n.value.trim()===(i.name||slug) && d.value.trim()===(i.description||"")); };
+    n.oninput=d.oninput=dirty;
+    sv.onclick=async()=>{ sv.disabled=true; sv.textContent="Sparar …";
+      try{ const next={...i, name:n.value.trim(), description:d.value.trim()}; delete next._sha;
+        const cur=await getJson(`apps/${slug}/info.json`); const sha=await putJson(`apps/${slug}/info.json`, next, cur?.sha, `Info för appen ${slug}`);
+        APPINFO[slug]={...next,_sha:sha}; $("#drawer-sub").textContent=next.name; toast("Sparat"); renderApps(); }
+      catch(e){ alert(ghErr(e)); } sv.textContent="Spara"; }; }
+}
+async function removeApp(slug){
+  const i=APPINFO[slug]||{};
+  if(!confirm(`Ta bort appen ${i.name||slug}? Länken slutar fungera för alla som har den.`)) return;
+  try{ const t=(await gh(`/git/trees/${CFG.branch}?recursive=1`)).tree||[];
+    await commitFiles(t.filter(x=>x.type!=="tree" && x.path.startsWith(`apps/${slug}/`)).map(x=>({path:x.path, b64:null})), `Ta bort appen ${i.name||slug}`);
+    delete APPINFO[slug]; toast("Borttagen"); showList(); }
+  catch(e){ alert(ghErr(e)); }
+}
+
 /* ===== Versionshistorik: varje publicering är en version (en commit i repot) ===== */
 async function ghRaw(path){
   const r=await fetch(`https://api.github.com/repos/${CFG.owner}/${CFG.repo}${path}`,{headers:{Authorization:`Bearer ${store.get("token")}`,Accept:"application/vnd.github.raw","X-GitHub-Api-Version":"2022-11-28"}});
@@ -1245,18 +1324,23 @@ const newPw = () => `${WORDS[rnd(WORDS.length)]}-${WORDS[rnd(WORDS.length)]}-${1
 const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60) || "prototyp";
 let SRC=null, FIXED_SLUG=null, slugTouched=false;
 
-function openPublish(slug){
-  SRC=null; FIXED_SLUG=slug; slugTouched=!!slug;
-  const meta=JSON.parse(store.get("meta")||"{}");
-  $("#pub-h").textContent = slug ? `Ny version av ${nameOf(slug)}` : "Ladda upp ny prototyp";
-  $("#f-name").value = slug ? nameOf(slug) : ""; $("#f-slug").value = slug||""; $("#f-slug").disabled=!!slug;
+function openPublish(slug, kind="proto"){
+  SRC=null; FIXED_SLUG=slug; slugTouched=!!slug; PUBKIND=kind;
+  const meta=JSON.parse(store.get("meta")||"{}"), app=kind==="app";
+  const nm = slug ? (app ? (APPINFO[slug]?.name||slug) : nameOf(slug)) : "";
+  $("#pub-h").textContent = slug ? `Ny version av ${nm}` : app ? "Lägg till app" : "Ladda upp ny prototyp";
+  $("#row-pw").hidden=app; $("#row-desc").hidden=!app; $(".js-vault-hint").hidden=true;
+  $("#f-desc").value = app && slug ? (APPINFO[slug]?.description||"") : "";
+  $("#drop b").textContent = app ? "Dra in appens mapp här" : "Dra in prototypens mapp här";
+  $("#f-name").value = nm; $("#f-slug").value = slug||""; $("#f-slug").disabled=!!slug;
   $("#f-pw").value = (slug && meta[slug]?.pw) || newPw(); $("#f-note").value="";
   setThumb(null); THUMB_P=null; $("#t-hint").textContent="Skapas automatiskt från prototypens första sida. Syns bara i den här listan och krypteras med lösenordet.";
   $("#f-pwhint").textContent = !slug ? "Den som öppnar länken måste skriva lösenordet. Utan det går prototypen inte att läsa."
     : meta[slug]?.pw ? "Samma lösenord som förra gången, så teamet behöver inget nytt."
     : "Appen vet inte vilket lösenord som användes förra gången. Skriv in det gamla om teamet ska kunna fortsätta använda det.";
   ["picked","fields","progress","result"].forEach(id=>$("#"+id).hidden=true); $("#pub-err").textContent="";
-  $(".js-vault-hint").hidden = !(VAULT_EXISTS && !VAULT);
+  $(".js-vault-hint").hidden = app || !(VAULT_EXISTS && !VAULT);
+  if(app) $("#t-hint").textContent="Skapas automatiskt från appens startsida. Visas på kortet.";
   $("#publish").disabled=false; $("#drop").hidden=false; syncSlug(); view("pub");
 }
 $("#pub-back").onclick=()=>showList();
@@ -1264,7 +1348,8 @@ $("#f-newpw").onclick=()=>{ $("#f-pw").value=newPw(); };
 $("#f-name").oninput=()=>{ if(!slugTouched) $("#f-slug").value=slugify($("#f-name").value); syncSlug(); };
 $("#f-slug").oninput=()=>{ slugTouched=true; syncSlug(); };
 $("#f-slug").onblur=()=>{ $("#f-slug").value=slugify($("#f-slug").value); syncSlug(); };
-function syncSlug(){ const s=slugify($("#f-slug").value||$("#f-name").value); $("#f-url").textContent=siteUrl(s); $("#f-exists").hidden = !!FIXED_SLUG || !TREE.some(p=>p.slug===s); }
+function syncSlug(){ const s=slugify($("#f-slug").value||$("#f-name").value), app=PUBKIND==="app";
+  $("#f-url").textContent = app ? appUrl(s) : siteUrl(s); $("#f-exists").hidden = !!FIXED_SLUG || !(app ? APPS : TREE).some(p=>p.slug===s); }
 
 /* --- Välja filer: mapp (dra/välj) eller en html-fil --- */
 const drop=$("#drop");
@@ -1304,12 +1389,13 @@ const norm = p => { const out=[]; for(const s of p.split("/")){ if(s===""||s==="
 const dirOf = p => p.includes("/") ? p.slice(0,p.lastIndexOf("/")+1) : "";
 const isLocal = u => u && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\$\{)/i.test(u);
 
-async function bake(files){
+async function bake(files, opts={}){
   const byPath=new Map(files.map(f=>[f.path,f.file]));
   // Sidorna: html-filerna högst upp i mappen (index.html först, sedan i namnordning)
   const minDepth=Math.min(...files.filter(f=>/\.html?$/i.test(f.path)).map(f=>f.path.split("/").length));
   if(!isFinite(minDepth)) throw new Error("Hittade ingen html-fil i mappen.");
-  const pages=files.filter(f=>/\.html?$/i.test(f.path) && f.path.split("/").length===minDepth).map(f=>f.path)
+  // Källfiler (t.ex. index.src.html) och filer som börjar med _ är inte sidor
+  const pages=files.filter(f=>/\.html?$/i.test(f.path) && f.path.split("/").length===minDepth && !/(^|\/)_|\.src\.html?$/i.test(f.path)).map(f=>f.path)
     .sort((a,b)=>(/(^|\/)index\.html?$/i.test(b)-/(^|\/)index\.html?$/i.test(a)) || a.localeCompare(b,"sv",{numeric:true}));
   const used=new Set(), missing=new Set(), external=new Set(), cache=new Map();
   const dataUrl = async p => { if(!cache.has(p)) cache.set(p, readDataUrl(byPath.get(p), MIME[ext(p)]||"application/octet-stream")); used.add(p); return cache.get(p); };
@@ -1408,6 +1494,9 @@ new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==="attributes
 
   const out={};
   for(const p of pages) out[p]=await page(p);
+  // Appar: varje sida bakas för sig och publiceras som egen fil (länkar mellan sidorna fungerar som vanligt)
+  if(opts.separate){ const title=(out[pages[0]].match(/<title>([^<]*)<\/title>/i)||[])[1]||"";
+    return {separate:out, first:out[pages[0]], pages, used:[...used], missing:[...missing], external:[...external], extDone:[...extDone], dynCount, dynPrefixes:[...coveredPrefixes], title:title.trim(), html:out[pages[0]]}; }
   let html;
   if(pages.length===1) html=out[pages[0]];
   else{
@@ -1498,7 +1587,7 @@ f.onsubmit=async e=>{ e.preventDefault(); go.disabled=true; err.textContent="";
 async function useFiles(files, rootName){
   $("#pub-err").textContent=""; const pk=$("#picked"); pk.hidden=false; pk.innerHTML=`<span class="muted">Läser filerna …</span>`;
   try{
-    const b=await bake(files); SRC={...b, rootName};
+    const b=await bake(files,{separate:PUBKIND==="app"}); SRC={...b, rootName};
     $("#t-pv").textContent="Skapar …";
     THUMB_P = makeThumb(b.first).then(setThumb).catch(()=>{ setThumb(null); $("#t-hint").textContent="Tumnageln kunde inte skapas för den här prototypen. Den publiceras utan."; });
     const kb=n=>n>1e6?(n/1e6).toFixed(1)+" MB":Math.round(n/1e3)+" kB";
@@ -1519,7 +1608,40 @@ let stepT=null;
 function step(i){ const pr=$("#progress"); pr.hidden=false; pr.innerHTML=STEPS.map((t,j)=>`<div class="${j<i?"done":j===i?"on":""}">${t}${j===i?' <span class="js-secs" style="font-weight:400;color:var(--subtle)"></span>':""}</div>`).join("");
   clearInterval(stepT); const t0=Date.now(); stepT=setInterval(()=>{ const el=pr.querySelector(".js-secs"); if(!el||pr.hidden) return clearInterval(stepT); const s=Math.round((Date.now()-t0)/1000); if(s>=3) el.textContent=`(${s} s)`; },1000); }
 const wait = ms => new Promise(r=>setTimeout(r,ms));
+async function publishApp(){
+  const name=$("#f-name").value.trim(), slug=FIXED_SLUG||slugify($("#f-slug").value||name), err=$("#pub-err");
+  err.textContent="";
+  if(!SRC) return err.textContent="Välj appen först.";
+  if(!name) return err.textContent="Skriv ett namn.", $("#f-name").focus();
+  const existing=APPS.find(a=>a.slug===slug);
+  if(existing && !FIXED_SLUG && !confirm(`Appen ${slug} finns redan. Vill du ersätta den med den här?`)) return;
+  $("#publish").disabled=true; $("#drop").hidden=true; $("#fields").hidden=true;
+  try{
+    step(1); const stamp=Date.now().toString(36), now=new Date().toISOString(), cur=APPINFO[slug]||{};
+    const files=[];
+    for(const [p,html] of Object.entries(SRC.separate)){
+      const h = p===SRC.pages[0] ? html.replace(/<head[^>]*>/i, m=>m+`<meta name="pp-build" content="${stamp}">`) : html;
+      files.push({path:`apps/${slug}/${p.split("/").pop()}`, b64:utf8b64(h)}); }
+    const info={name, description:$("#f-desc").value.trim(), createdBy:cur.createdBy||ME.login, createdAt:cur.createdAt||now, updatedBy:ME.login, updatedAt:now, start:SRC.pages[0].split("/").pop()};
+    files.push({path:`apps/${slug}/info.json`, b64:utf8b64(JSON.stringify(info,null,2)+"\n")});
+    if(THUMB_P) await THUMB_P; if(THUMB) files.push({path:`apps/${slug}/tumnagel.jpg`, b64:b64(new Uint8Array(await THUMB.arrayBuffer()))});
+    // Ett startdokument som heter index.html behövs för att länken ska bli bara mappens adress
+    if(!files.some(f=>f.path===`apps/${slug}/index.html`)) files.push({path:`apps/${slug}/index.html`, b64:utf8b64(`<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${encodeURI(info.start)}"><title>${esc(name)}</title>`)});
+    const sha=await commitFiles(files, `${existing?"Uppdatera":"Lägg till"} appen ${name}${$("#f-note").value.trim()?": "+$("#f-note").value.trim():""}`);
+    APPINFO[slug]=info; await ensurePages();
+    step(2); const live=await waitLive("apps/"+slug, stamp, sha);
+    $("#progress").hidden=true;
+    const url=appUrl(slug), r=$("#result"); r.hidden=false;
+    r.innerHTML=`<h2 style="margin:0">${live?`<span class="okpop" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Klart! Appen är publicerad`:"Uppladdad. GitHub publicerar den strax"}</h2>
+      <div class="u">${esc(url)}</div>
+      <div class="row"><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a><button class="btn small" id="r-link">Kopiera länk</button></div>
+      <div><button class="btn primary" id="r-done">Till listan</button></div>`;
+    $("#r-link").onclick=()=>copy(url,"Länken"); $("#r-done").onclick=()=>showList();
+    loadTree().catch(()=>{});
+  }catch(e){ err.textContent=e.status?ghErr(e):"Något gick fel: "+e.message; $("#publish").disabled=false; $("#fields").hidden=false; $("#drop").hidden=false; $("#progress").hidden=true; }
+}
 $("#publish").onclick = async () => {
+  if(PUBKIND==="app") return publishApp();
   const name=$("#f-name").value.trim(), slug=FIXED_SLUG||slugify($("#f-slug").value||name), pw=$("#f-pw").value.trim(), err=$("#pub-err");
   err.textContent="";
   if(!SRC) return err.textContent="Välj prototypen först.";
