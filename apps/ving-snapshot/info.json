@@ -1,6 +1,6 @@
 {
   "name": "Ving Snapshot",
-  "description": "Klona & ladda ner HTML-kopior av sidor från ving.se, så att du kan börja prototypa med dem i Claude Code. Återskapa i Figma vid behov.",
+  "description": "Klona & ladda ner kopior av sidor från ving.se, så att du kan börja prototypa med dem. Via Claude Code eller i Figma.",
   "createdBy": "dstridsberg-cpu",
   "createdAt": "2026-11-24T10:06:06.985Z",
   "updatedBy": "dstridsberg-cpu",
