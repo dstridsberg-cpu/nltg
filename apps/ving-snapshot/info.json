@@ -1,0 +1,9 @@
+{
+  "name": "Ving Snapshot",
+  "description": "Spara en exakt HTML-kopia av vilken Ving-sida som helst, så att du sedan kan börja prototypa med den.",
+  "createdBy": "dstridsberg-cpu",
+  "createdAt": "2026-11-24T10:06:06.985Z",
+  "updatedBy": "dstridsberg-cpu",
+  "updatedAt": "2026-11-24T10:06:06.985Z",
+  "start": "index.html"
+}
