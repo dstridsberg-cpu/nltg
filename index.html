@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-24T14:21">
+<meta name="pp-app" content="2026-11-24T14:25">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -72,7 +72,7 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .list>.err,.list>.muted{grid-column:1/-1}
 .add{align-self:stretch;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#fff;border:0;border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);color:var(--cta);transition:box-shadow .15s}
 .add:hover{box-shadow:0 2px 10px rgba(32,32,32,.14)}
-.add svg{transition:transform .15s}
+.add svg{transition:transform .15s;color:#fe8c00}   /* Ving-logotypens orange */
 .add:hover svg{transform:scale(1.08)}
 .add span{font:700 19px/1.1 var(--head);color:var(--text)}
 .add:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
@@ -105,7 +105,10 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .proj .pc{padding:16px 24px;display:flex;flex-direction:column;gap:6px}
 .proj .t{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;font:700 19px/1.1 var(--head);color:var(--text)}
 .proj .t svg{flex:none}
-.proj .t .app-ic{width:30px;height:30px;flex:none;margin-right:-2px}
+/* Appar: ikonen i stället för skärmdump */
+.proj .th.ic{background:#fff5e8}
+.proj .th .app-big{width:34%;max-width:120px;height:auto;aspect-ratio:1;object-fit:contain;animation:none;transition:transform var(--t2) var(--ease)}
+.proj:hover .th .app-big,.proj:focus-within .th .app-big{transform:scale(1.06)}
 .proj .t .app-ic+span{flex:1}
 .proj .t:hover span{text-decoration:underline}
 .proj .u{font-size:14px;color:var(--subtle)}
@@ -993,7 +996,7 @@ async function renderApps(){
     const canDel = isMember() && (isAdmin() || (i.createdBy && i.createdBy.toLowerCase()===ME.login.toLowerCase()));
     return `<article class="proj app" data-app="${esc(a.slug)}">
       <div class="media">
-        <div class="th" aria-hidden="true">${a.thumb?`<img src="${url}tumnagel.jpg?v=${esc(a.sha.slice(0,7))}" alt="" onerror="this.parentNode.textContent='${name.slice(0,1).toUpperCase()}'">`:name.slice(0,1).toUpperCase()}</div>
+        <div class="th${i.icon?" ic":""}" aria-hidden="true">${i.icon?`<img class="app-big" src="${esc(i.icon)}" alt="">`:a.thumb?`<img src="${url}tumnagel.jpg?v=${esc(a.sha.slice(0,7))}" alt="" onerror="this.parentNode.textContent='${name.slice(0,1).toUpperCase()}'">`:name.slice(0,1).toUpperCase()}</div>
         <div class="ov">
           <div class="tools">
             <button class="ico" data-act="set" title="Inställningar" aria-label="Inställningar för ${name}" aria-haspopup="dialog">${ICON.gear}</button>
@@ -1007,7 +1010,7 @@ async function renderApps(){
         </div>
       </div>
       <div class="pc">
-        <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna appen">${i.icon?`<img class="app-ic" src="${esc(i.icon)}" alt="">`:""}<span>${name}</span>${CHEV}</a>
+        <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna appen"><span>${name}</span>${CHEV}</a>
         ${i.description?`<div class="u" style="color:var(--text);font-size:15px">${esc(i.description)}</div>`:""}
         <div class="by js-by">&nbsp;</div>
       </div></article>`; }).join("");
@@ -1032,7 +1035,8 @@ function openAppSettings(slug, from){
     <div class="set-row"><span class="k">Tillagd</span><span class="by" id="a-created"></span><span class="small muted">${i.createdAt?esc(fmtDate(i.createdAt)):""}</span></div>
     <div class="set-row"><span class="k">Länk</span><span class="val">${esc(url)}</span>
       <div class="row"><button class="btn small" id="a-link">Kopiera länk</button><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener">Öppna</a></div></div>`, from);
-  $("#drawer-hero").hidden=false; $("#drawer-hero").innerHTML = APPS.find(a=>a.slug===slug)?.thumb ? `<img src="${esc(url)}tumnagel.jpg" alt="">` : esc((i.name||slug).slice(0,1).toUpperCase());
+  const hero=$("#drawer-hero"); hero.hidden=false; hero.style.background=i.icon?"#fff5e8":"";
+  hero.innerHTML = i.icon ? `<img src="${esc(i.icon)}" alt="" style="width:30%;height:auto;object-fit:contain">` : APPS.find(a=>a.slug===slug)?.thumb ? `<img src="${esc(url)}tumnagel.jpg" alt="">` : esc((i.name||slug).slice(0,1).toUpperCase());
   byLine($("#a-created"), i.createdBy, "");
   $("#a-link").onclick=()=>copy(url,"Länken");
   const n=$("#a-name"), d=$("#a-desc"), sv=$("#a-save");
