@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="sv">
-<head><meta name="pp-build" content="mwuoni5g">
+<head><meta name="pp-build" content="mwupb8uh">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -27,9 +27,10 @@ header h1{margin:8px 0 6px;font:700 40px/1.05 var(--head)}
 header p{margin:0;color:var(--subtle);max-width:560px}
 /* Två kolumner: HTML-prototyper (huvudspåret) och Figma (eget spår) */
 /* Fyra kolumner: steg 1 | steg 2 | steg 3 | Figma */
-.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;align-items:start}
-.cols>section.col{grid-column:1 / span 3}
-.cols>aside.col{grid-column:4}
+.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 24px;align-items:start}
+.cols>header{grid-column:1 / span 3;grid-row:1}
+.cols>section.col{grid-column:1 / span 3;grid-row:2}
+.cols>aside.col{grid-column:4;grid-row:1 / span 2;align-self:stretch}
 .cols .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:stretch}
 .cols .step{padding:24px;gap:8px}
 .step.install{counter-increment:none}
@@ -41,7 +42,7 @@ header p{margin:0;color:var(--subtle);max-width:560px}
 .col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .colh{margin:0;font:700 26px/1.15 var(--head)}
 .colp{margin:-6px 0 2px;color:var(--subtle)}
-aside.col{position:sticky;top:24px}
+
 .figcard{background:var(--surface);border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);padding:22px 24px;animation:rise .45s var(--ease) .18s both}
 .fsteps{list-style:none;margin:0;padding:0;counter-reset:f;display:flex;flex-direction:column;gap:20px}
 .fsteps>li{counter-increment:f;position:relative;padding-left:42px;display:flex;flex-direction:column;gap:2px}
@@ -69,8 +70,19 @@ aside.col{position:sticky;top:24px}
 @media (prefers-reduced-motion:reduce){.cc-msg{opacity:1}.cc.play .cc-drag{animation:none}.cc-caret{animation:none}}
 
 /* Figma-kolumnen: en mörk yta med vit text */
+.pick{display:flex;align-items:center;gap:10px;margin-top:8px;cursor:pointer;min-width:0}
+.pick-btn{flex:none;height:40px;padding:0 16px;border-radius:999px;border:2px solid #fff;color:#fff;display:inline-flex;align-items:center;font:700 15px/1 var(--head)}
+.pick:hover .pick-btn{background:rgba(255,255,255,.08)}
+.pick:focus-within .pick-btn{outline:2px solid #9cc3c4;outline-offset:2px}
+.pick-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9c4bd;font-size:15px}
+.pick.has .pick-name{color:#fff}
+.pick-meta{color:#7fd19b!important;font-size:14px!important;margin-top:4px}
+.pick-meta:empty{display:none}
+.skill-dl{font-size:13px!important;color:#a8a29a!important;margin-top:8px}
+.skill-dl a{color:#fff}
 aside.col{background:#202020;color:#fff;border-radius:8px;padding:28px 28px 30px;gap:12px;animation:rise .45s var(--ease) .18s both}
 aside.col .colh{color:#fff}
+aside.col .figma-logo{width:30px;height:45px;margin:4px 0 10px}
 aside.col .colp{color:#c9c4bd;margin:0 0 6px}
 aside.col .figcard{background:none;box-shadow:none;padding:0;animation:none}
 aside.col .fsteps>li::before{background:rgba(255,255,255,.12);color:#fff}
@@ -84,7 +96,59 @@ aside.col .radios label{color:#fff}
 aside.col details,aside.col summary{color:#c9c4bd}
 aside.col .status{color:#7fd19b}
 aside.col textarea.code{background:#2c2c2c;border-color:#444;color:#e8e4de}
-@media (max-width:1100px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}.cols>section.col{grid-column:1 / -1}.cols>aside.col{grid-column:1 / -1;position:static}}
+
+/* ===== Onboarding-slider: ett steg i taget ===== */
+.slider{background:var(--surface);border-radius:8px;box-shadow:0 1px 2px rgba(32,32,32,.1);padding:22px 32px 26px;display:flex;flex-direction:column;gap:18px;animation:rise .45s var(--ease) both}
+.s-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr)}
+.s-tabs button{background:none;border:0;padding:4px 0 12px;text-align:left;font:700 15px/1 var(--head);color:#a39c92;cursor:pointer;transition:color .2s}
+.s-tabs button[aria-selected="true"]{color:var(--text)}
+.s-tabs button:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.s-bar{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;background:#efe9e1;overflow:hidden}
+.s-bar i{display:block;height:100%;width:33.334%;background:var(--cta);border-radius:2px;transition:transform .45s var(--ease)}
+.s-view{overflow:hidden}
+.s-track{display:flex;transition:transform .55s var(--ease)}
+.slide{flex:0 0 100%;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:40px;align-items:center;padding:8px 4px 4px;opacity:0;transition:opacity .45s}
+.slide.on{opacity:1}
+.s-txt{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.s-num{font:700 72px/1 var(--head);color:var(--cta)}
+.slide[data-i="0"] .s-num{font-size:26px;line-height:1.15;height:72px;display:flex;align-items:flex-end;padding-bottom:6px}
+.s-txt h2{margin:4px 0 0;font:700 26px/1.2 var(--head);padding-right:0!important}
+.s-txt h2 small{font:400 16px var(--body);color:var(--subtle)}
+.s-txt p{margin:0;color:var(--subtle)}
+.s-txt .req{position:static;margin:0}
+.s-txt .bm{margin-top:8px}
+.s-vis{min-width:0}
+.s-vis .demo,.s-vis .cc{margin:0}
+.s-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #eee9e2;padding-top:16px}
+.s-nav .btn[disabled]{visibility:hidden}
+.s-count{font-size:14px;color:var(--subtle)}
+/* Installationsanimation: knappen dras upp till bokmärkesfältet */
+.inst{position:relative;aspect-ratio:16/10;border-radius:10px;background:#efe9e1;overflow:hidden}
+.inst-win{position:absolute;inset:6% 6% 0;background:#fff;border-radius:10px 10px 0 0;box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden;font-family:-apple-system,system-ui,sans-serif;display:flex;flex-direction:column}
+.inst .tabs{height:30px;display:flex;align-items:flex-end;gap:10px;padding:0 10px;background:#e9ecef}
+.inst .tab{background:#fff;border-radius:8px 8px 0 0;padding:6px 14px;font-size:11px;color:#202020;display:flex;align-items:center;gap:6px}
+.inst .dots{display:flex;gap:6px;align-self:center}.inst .dots i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.inst .dots i:nth-child(2){background:#febc2e}.inst .dots i:nth-child(3){background:#28c840}
+.inst .fav{width:12px;height:12px;border-radius:3px;background:#ea5c0b}
+.inst .bar{height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid #e4e4e4}
+.inst .nav{color:#9aa0a6;font-size:14px;letter-spacing:4px}
+.inst .addr{flex:1;height:20px;border-radius:10px;background:#f1f3f4;font-size:10px;color:#3c4043;display:flex;align-items:center;padding:0 12px;white-space:nowrap;overflow:hidden}
+.inst .bms{height:28px;display:flex;align-items:center;gap:4px;padding:0 8px;border-bottom:1px solid #e4e4e4}
+.inst .bmk{font-size:11px;color:#3c4043;padding:3px 8px;border-radius:12px;display:flex;align-items:center;gap:5px}
+.inst .bmk.o{color:#80868b}
+.inst .bmk b{display:flex;color:#ea5c0b}.inst .bmk b svg{width:12px;height:12px}
+.inst .bmk.drop{opacity:0;transform:scale(.8);transition:opacity .3s,transform .3s}
+.inst.done .bmk.drop{opacity:1;transform:none;background:#fff3ea}
+.inst-page{flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:14%;background:#faf6f1}
+.inst-btn{display:block;width:34%;height:34px;background:var(--cta);border-radius:999px;box-shadow:0 6px 16px rgba(234,92,11,.3)}
+.inst-ghost{position:absolute;left:50%;top:48%;transform:translate(-50%,0);background:#fff;color:#3c4043;border-radius:12px;padding:5px 10px;font:600 11px/1 -apple-system,system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:0;white-space:nowrap}
+.inst-cur{position:absolute;left:50%;top:50%;width:20px;height:20px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.inst.play .inst-ghost{animation:ghost 2.2s cubic-bezier(.45,0,.2,1) .5s both}
+.inst.play .inst-cur{animation:icur 2.2s cubic-bezier(.45,0,.2,1) .5s both}
+@keyframes ghost{0%{opacity:0;left:50%;top:48%}15%{opacity:1;left:50%;top:48%}82%{opacity:1;left:70%;top:23%}100%{opacity:0;left:70%;top:23%}}
+@keyframes icur{0%{left:50%;top:50%}15%{left:50%;top:50%}82%{left:70%;top:25%}100%{left:70%;top:25%}}
+@media (max-width:900px){.slide{grid-template-columns:1fr;gap:20px}.slider{padding:18px 18px 20px}}
+@media (prefers-reduced-motion:reduce){.s-track,.s-bar i{transition:none}.inst .bmk.drop{opacity:1;transform:none}}
+@media (max-width:1100px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}.cols>header,.cols>section.col{grid-column:1 / -1;grid-row:auto}.cols>aside.col{grid-row:auto}.cols>aside.col{grid-column:1 / -1;position:static}}
 @media (max-width:1100px){.cols .steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){.cols .steps{grid-template-columns:1fr}}
 .steps{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:16px}
@@ -197,19 +261,28 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
 </head>
 <body>
 <main>
+
+
+  <div class="cols">
   <header>
     <p class="k">UX-hub · App</p>
     <h1>Ving Snapshot</h1>
     <p>Spara en exakt HTML-kopia av vilken Ving-sida som helst, precis som du ser den. Fungerar även bakom inloggning och i testmiljöer.</p>
   </header>
-
-  <div class="cols">
   <section class="col">
-    <ol class="steps">
-    <li class="step install">
+    <div class="slider" id="slider" aria-roledescription="karusell" aria-label="Kom igång med Ving Snapshot">
+      <div class="s-tabs" role="tablist" aria-label="Steg">
+        <button role="tab" data-go="0">Installation</button><button role="tab" data-go="1">Steg 1</button><button role="tab" data-go="2">Steg 2</button>
+        <span class="s-bar"><i id="s-fill"></i></span>
+      </div>
+      <div class="s-view"><div class="s-track" id="s-track">
+      <section class="slide" data-i="0" aria-roledescription="bild" aria-label="Installation" role="group">
+        <div class="s-txt">
+          <span class="s-num">Installation</span>
+
       <h2 class="has-req">Lägg till Ving Snapshot i bokmärkesfältet <small>(en gång)</small></h2>
       <span class="req"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#db4437" d="M24 4a20 20 0 0 1 17.32 10H24a10 10 0 0 0-9.33 6.4L7.4 9.6A20 20 0 0 1 24 4z"/><path fill="#0f9d58" d="M6.68 14.03 14.7 27.9A10 10 0 0 0 24 34a10 10 0 0 0 2.7-.37L19.5 44.4A20 20 0 0 1 6.68 14.03z"/><path fill="#ffcd40" d="M41.32 14A20 20 0 0 1 21.6 43.86L30.17 29A10 10 0 0 0 33.2 20H41.3z"/><circle cx="24" cy="24" r="8.2" fill="#fff"/><circle cx="24" cy="24" r="6.6" fill="#4285f4"/></svg>Kräver Google Chrome</span>
-      <p>Dra den orange knappen dit. Ser du inget bokmärkesfält? Tryck <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>B</kbd>.</p>
+      <p>Dra den orangea knappen nedan in i ditt bokmärkesfält i Chrome. Ser du inget bokmärkesfält? Tryck <span style="white-space:nowrap"><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>B</kbd></span>.</p>
       <!-- Chrome döper bokmärket efter länkens text. Därför är texten "Ving Snapshot" (dold), och det som syns står i ::after. -->
       <a class="bm" id="bm" href="javascript:(function%20()%20%7B%0Avar%20OPTS%20=%20%7B%22pii%22:true,%22scroll%22:true,%22inline%22:false%7D;%0Avar%20HOST_ID%20=%20&#x27;ving-snap-host&#x27;;%0Avar%20existing%20=%20document.getElementById(HOST_ID);%0Aif%20(existing)%20existing.remove();%0Avar%20TRACKER_HOSTS%20=%20/(%5E%7C%5C.)(bat%5C.bing%5C.com%7Cgoogle-analytics%5C.com%7Cgoogletagmanager%5C.com%7Cdoubleclick%5C.net%7Cfacebook%5C.com%7Cfacebook%5C.net%7Canalytics%5C.tiktok%5C.com%7Chotjar%5C.com%7Cclarity%5C.ms%7Csnapchat%5C.com%7Clinkedin%5C.com%7Cadservice%5C.google%5C.com%7Cgoogleadservices%5C.com%7Cpinterest%5C.com%7Ccriteo%5C.com%7Ccriteo%5C.net)$/i;%0Avar%20host%20=%20document.createElement(&#x27;div&#x27;);%0Ahost.id%20=%20HOST_ID;%0Ahost.style.cssText%20=%20&#x27;position:fixed;top:16px;right:16px;z-index:2147483647;&#x27;;%0Avar%20root%20=%20host.attachShadow(%7B%20mode:%20&#x27;open&#x27;%20%7D);%0Aroot.innerHTML%20=%0A&#x27;%3Cstyle%3E&#x27;%20+%0A&#x27;:host%7Ball:initial%7D&#x27;%20+%0A&#x27;.p%7Bfont:14px/1.4%20-apple-system,BlinkMacSystemFont,%22Segoe%20UI%22,sans-serif;width:300px;background:%23fff;color:%231f2a2e;border-radius:12px;box-shadow:0%208px%2032px%20rgba(0,0,0,.25);padding:16px;display:grid;gap:12px%7D&#x27;%20+%0A&#x27;.h%7Bdisplay:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px%7D&#x27;%20+%0A&#x27;.x%7Ball:unset;cursor:pointer;font-size:20px;line-height:1;padding:0%204px;color:%236b7478%7D&#x27;%20+%0A&#x27;.s%7Bfont-size:13px;color:%231f2a2e;word-break:break-word%7D&#x27;%20+%0A&#x27;.s.err%7Bcolor:%23b3261e%7D&#x27;%20+%0A&#x27;.o%7Bfont-size:12px;color:%236b7478%7D&#x27;%20+%0A&#x27;label%7Bdisplay:flex;gap:8px;align-items:flex-start;cursor:pointer%7D&#x27;%20+%0A&#x27;input%7Bmargin:3px%200%200;accent-color:%23e8621f%7D&#x27;%20+%0A&#x27;small%7Bdisplay:block;color:%236b7478;font-size:12px%7D&#x27;%20+%0A&#x27;.b%7Ball:unset;cursor:pointer;text-align:center;background:%23e8621f;color:%23fff;font-weight:700;border-radius:999px;padding:10px%2016px%7D&#x27;%20+%0A&#x27;.s:empty,.o:empty,%5Bhidden%5D%7Bdisplay:none%7D&#x27;%20+%0A&#x27;%3C/style%3E&#x27;%20+%0A&#x27;%3Cdiv%20class=%22p%22%20role=%22status%22%20aria-label=%22Ving%20Snapshot%22%3E&#x27;%20+%0A&#x27;%3Cdiv%20class=%22h%22%3EVing%20Snapshot%3Cbutton%20class=%22x%22%20id=%22close%22%20aria-label=%22Close%22%3E%C3%97%3C/button%3E%3C/div%3E&#x27;%20+%0A&#x27;%3Clabel%20id=%22l-pii%22%3E%3Cinput%20type=%22checkbox%22%20id=%22pii%22&#x27;%20+%20(OPTS.pii%20?%20&#x27;%20checked&#x27;%20:%20&#x27;&#x27;)%20+%20&#x27;%3E%3Cspan%3ERemove%20personal%20data%3Csmall%3ESwaps%20typed-in%20names,%20email,%20phone,%20address%20and%20birth%20date%20for%20fake%20ones;%20hides%20booking%20tokens.%3C/small%3E%3C/span%3E%3C/label%3E&#x27;%20+%0A&#x27;%3Clabel%20id=%22l-scroll%22%3E%3Cinput%20type=%22checkbox%22%20id=%22scroll%22&#x27;%20+%20(OPTS.scroll%20?%20&#x27;%20checked&#x27;%20:%20&#x27;&#x27;)%20+%20&#x27;%3E%3Cspan%3ELoad%20all%20images%20first%3Csmall%3EScrolls%20the%20page%20once%20so%20lazy%20images%20appear.%3C/small%3E%3C/span%3E%3C/label%3E&#x27;%20+%0A&#x27;%3Clabel%20id=%22l-inline%22%3E%3Cinput%20type=%22checkbox%22%20id=%22inline%22&#x27;%20+%20(OPTS.inline%20?%20&#x27;%20checked&#x27;%20:%20&#x27;&#x27;)%20+%20&#x27;%3E%3Cspan%3EStore%20images%20in%20the%20file%3Csmall%3EWorks%20offline.%20Much%20larger%20file.%3C/small%3E%3C/span%3E%3C/label%3E&#x27;%20+%0A&#x27;%3Cbutton%20class=%22b%22%20id=%22go%22%3ESave%20copy%3C/button%3E&#x27;%20+%0A&#x27;%3Cdiv%20class=%22s%22%20id=%22status%22%20aria-live=%22polite%22%3E%3C/div%3E&#x27;%20+%0A&#x27;%3Cdiv%20class=%22o%22%20id=%22opts%22%3E%3C/div%3E&#x27;%20+%0A&#x27;%3C/div%3E&#x27;;%0Adocument.documentElement.appendChild(host);%0Avar%20$%20=%20function%20(id)%20%7B%20return%20root.getElementById(id);%20%7D;%0Avar%20setStatus%20=%20function%20(msg,%20isErr)%20%7B%20$(&#x27;status&#x27;).textContent%20=%20msg;%20$(&#x27;status&#x27;).className%20=%20&#x27;s&#x27;%20+%20(isErr%20?%20&#x27;%20err&#x27;%20:%20&#x27;&#x27;);%20%7D;%0A$(&#x27;close&#x27;).onclick%20=%20function%20()%20%7B%20host.remove();%20%7D;%0Aif%20(!/(%5E%7C%5C.)(ving%5C.(se%7Cno%7Cdk%7Cfi)%7Cspies%5C.dk%7Ctjareborg%5C.fi%7Cnltg%5C.com)$/i.test(location.hostname))%20%7B%0AsetStatus(&#x27;This%20isn%E2%80%99t%20a%20Ving%20page,%20but%20you%20can%20still%20save%20a%20copy.&#x27;);%0A%7D%0Avar%20abs%20=%20function%20(u,%20base)%20%7B%20try%20%7B%20return%20new%20URL(u,%20base%20%7C%7C%20location.href).href;%20%7D%20catch%20(e)%20%7B%20return%20u;%20%7D%20%7D;%0Avar%20hostOf%20=%20function%20(u)%20%7B%20try%20%7B%20return%20new%20URL(u,%20location.href).hostname;%20%7D%20catch%20(e)%20%7B%20return%20&#x27;&#x27;;%20%7D%20%7D;%0Avar%20fixUrls%20=%20function%20(css,%20base)%20%7B%0Areturn%20css.replace(/url%5C(%5Cs*(%5B&#x27;%22%5D?)(%5B%5E&#x27;%22)%5D+)%5C1%5Cs*%5C)/g,%20function%20(m,%20q,%20u)%20%7B%0Aif%20(/%5E(data:%7C%23)/.test(u))%20return%20m;%0Areturn%20&#x27;url(%22&#x27;%20+%20abs(u,%20base)%20+%20&#x27;%22)&#x27;;%0A%7D);%0A%7D;%0Avar%20fixSrcset%20=%20function%20(v)%20%7B%0Areturn%20v.split(/,%5Cs+/).map(function%20(p)%20%7B%20p%20=%20p.trim().split(/%5Cs+/);%20p%5B0%5D%20=%20abs(p%5B0%5D);%20return%20p.join(&#x27;%20&#x27;);%20%7D).join(&#x27;,%20&#x27;);%0A%7D;%0Avar%20sleep%20=%20function%20(ms)%20%7B%20return%20new%20Promise(function%20(r)%20%7B%20setTimeout(r,%20ms);%20%7D);%20%7D;%0Avar%20esc%20=%20function%20(s)%20%7B%20return%20String(s).replace(/&amp;/g,%20&#x27;&amp;amp;&#x27;).replace(/%3C/g,%20&#x27;&amp;lt;&#x27;).replace(/%3E/g,%20&#x27;&amp;gt;&#x27;).replace(/%22/g,%20&#x27;&amp;quot;&#x27;);%20%7D;%0Avar%20replaceAll%20=%20function%20(s,%20a,%20b)%20%7B%20return%20s.split(a).join(b);%20%7D;%0Afunction%20preload()%20%7B%0Avar%20y0%20=%20window.scrollY,%20y%20=%200;%0Areturn%20new%20Promise(function%20(done)%20%7B%0A(function%20step()%20%7B%0Ay%20+=%20Math.max(200,%20window.innerHeight%20*%200.8);%0Awindow.scrollTo(0,%20y);%0Aif%20(y%20%3C%20document.documentElement.scrollHeight)%20setTimeout(step,%20150);%0Aelse%20setTimeout(function%20()%20%7B%20window.scrollTo(0,%20y0);%20done();%20%7D,%20800);%0A%7D)();%0A%7D).then(function%20()%20%7B%0Avar%20t0%20=%20Date.now();%0Areturn%20(function%20wait()%20%7B%0Avar%20pending%20=%20%5B%5D.some.call(document.images,%20function%20(i)%20%7B%20return%20!i.complete;%20%7D);%0Aif%20(!pending%20%7C%7C%20Date.now()%20-%20t0%20%3E%208000)%20return;%0Areturn%20sleep(400).then(wait);%0A%7D)();%0A%7D);%0A%7D%0Afunction%20placeholderFor(f)%20%7B%0Avar%20key%20=%20(f.type%20+%20&#x27;%20&#x27;%20+%20f.name%20+%20&#x27;%20&#x27;%20+%20f.autocomplete).toLowerCase();%0Aif%20(key.indexOf(&#x27;email&#x27;)%20%3E%20-1%20%7C%7C%20f.value.indexOf(&#x27;@&#x27;)%20%3E%20-1)%20return%20&#x27;anna.andersson@example.com&#x27;;%0Aif%20(/tel%7Cphone%7Cmobil/.test(key))%20return%20&#x27;+46700000000&#x27;;%0Aif%20(/given%7Cfirst%7Cf%C3%B6rnamn%7Cfornamn/.test(key))%20return%20&#x27;Anna&#x27;;%0Aif%20(/family%7Clast%7Cefternamn%7Csurname/.test(key))%20return%20&#x27;Andersson&#x27;;%0Aif%20(/birth%7Cf%C3%B6delse%7Cfodelse%7Cbday/.test(key)%20%7C%7C%20f.type%20===%20&#x27;date&#x27;)%20return%20&#x27;DATE&#x27;;%0Aif%20(/postal%7Czip%7Cpostnummer/.test(key))%20return%20&#x27;12345&#x27;;%0Aif%20(/address%7Cadress%7Cstreet/.test(key))%20return%20&#x27;Exempelgatan%201&#x27;;%0Aif%20(/city%7Clocality%7C%5Cbort%5Cb/.test(key))%20return%20&#x27;Stockholm&#x27;;%0Areturn%20&#x27;Exempel&#x27;;%0A%7D%0Afunction%20fakeDateLike(s)%20%7B%20return%20%7B%206:%20&#x27;900101&#x27;,%208:%20&#x27;19900101&#x27;,%2010:%20&#x27;1990-01-01&#x27;%20%7D%5Bs.length%5D%20%7C%7C%20&#x27;1990-01-01&#x27;;%20%7D%0Afunction%20scrub(body,%20fields)%20%7B%0Avar%20seen%20=%20%7B%7D,%20count%20=%200;%0Afields.slice().sort(function%20(a,%20b)%20%7B%20return%20b.value.length%20-%20a.value.length;%20%7D).forEach(function%20(f)%20%7B%0Avar%20v%20=%20f.value.trim();%0Aif%20(v.length%20%3C%202%20%7C%7C%20seen%5Bv%5D%20%7C%7C%20/checkbox%7Cradio%7Cnumber%7Csearch/.test(f.type))%20return;%0Aseen%5Bv%5D%20=%201;%0Avar%20ph%20=%20placeholderFor(f);%0Avar%20variants%20=%20%5Bv,%20esc(v)%5D;%0Avar%20d%20=%20v.replace(/%5CD/g,%20&#x27;&#x27;);%0Aif%20(ph%20===%20&#x27;DATE&#x27;%20&amp;&amp;%20(d.length%20===%206%20%7C%7C%20d.length%20===%208))%20%7B%0Avar%20yy%20=%20String(new%20Date().getFullYear()).slice(2);%0Avar%20ymd%20=%20d.length%20===%208%20?%20d%20:%20((+d.slice(0,%202)%20%3E%20+yy%20?%20&#x27;19&#x27;%20:%20&#x27;20&#x27;)%20+%20d);%0Avariants.push(ymd.slice(0,%204)%20+%20&#x27;-&#x27;%20+%20ymd.slice(4,%206)%20+%20&#x27;-&#x27;%20+%20ymd.slice(6),%20ymd,%20d);%0A%7D%0Avariants%20=%20variants.filter(function%20(x,%20i)%20%7B%20return%20variants.indexOf(x)%20===%20i;%20%7D).sort(function%20(a,%20b)%20%7B%20return%20b.length%20-%20a.length;%20%7D);%0Avariants.forEach(function%20(x)%20%7B%0Avar%20n%20=%20body.split(x).length%20-%201;%0Aif%20(n)%20%7B%20count%20+=%20n;%20body%20=%20replaceAll(body,%20x,%20ph%20===%20&#x27;DATE&#x27;%20?%20fakeDateLike(x)%20:%20ph);%20%7D%0A%7D);%0A%7D);%0Abody%20=%20body.replace(/(bookingToken=)%5B0-9a-fA-F-%5D%7B20,%7D/g,%20function%20(m,%20p)%20%7B%20count++;%20return%20p%20+%20&#x27;REDACTED&#x27;;%20%7D);%0Areturn%20%7B%20body:%20body,%20count:%20count%20%7D;%0A%7D%0Afunction%20toDataUri(url)%20%7B%0Areturn%20fetch(url).then(function%20(r)%20%7B%0Aif%20(!r.ok)%20throw%20new%20Error(r.status);%0Areturn%20r.blob();%0A%7D).then(function%20(b)%20%7B%0Areturn%20new%20Promise(function%20(res)%20%7B%20var%20fr%20=%20new%20FileReader();%20fr.onload%20=%20function%20()%20%7B%20res(fr.result);%20%7D;%20fr.readAsDataURL(b);%20%7D);%0A%7D);%0A%7D%0Afunction%20filename()%20%7B%0Avar%20p%20=%20location.pathname.replace(/%5E%5C/+%7C%5C/+$/g,%20&#x27;&#x27;).toLowerCase().replace(/%5B%5Ea-z0-9%5D+/g,%20&#x27;-&#x27;)%20%7C%7C%20&#x27;home&#x27;;%0Avar%20d%20=%20new%20Date(),%20pad%20=%20function%20(n)%20%7B%20return%20(n%20%3C%2010%20?%20&#x27;0&#x27;%20:%20&#x27;&#x27;)%20+%20n;%20%7D;%0Areturn%20&#x27;ving-&#x27;%20+%20p%20+%20&#x27;-&#x27;%20+%20d.getFullYear()%20+%20pad(d.getMonth()%20+%201)%20+%20pad(d.getDate())%20+%20&#x27;-&#x27;%20+%20pad(d.getHours())%20+%20pad(d.getMinutes())%20+%20&#x27;.html&#x27;;%0A%7D%0Afunction%20capture(opts)%20%7B%0Avar%20cssJobs%20=%20%5B%5D.map.call(document.styleSheets,%20function%20(s)%20%7B%0Avar%20media%20=%20s.media%20&amp;&amp;%20s.media.mediaText%20&amp;&amp;%20s.media.mediaText%20!==%20&#x27;all&#x27;%20?%20s.media.mediaText%20:%20&#x27;&#x27;;%0Avar%20wrap%20=%20function%20(t)%20%7B%20return%20media%20?%20&#x27;@media%20&#x27;%20+%20media%20+%20&#x27;%20%7B%5Cn&#x27;%20+%20t%20+%20&#x27;%5Cn%7D&#x27;%20:%20t;%20%7D;%0Avar%20label%20=%20&#x27;/*%20&#x27;%20+%20(s.href%20%7C%7C%20&#x27;inline&#x27;)%20+%20&#x27;%20*/%5Cn&#x27;;%0Atry%20%7B%0Areturn%20Promise.resolve(label%20+%20wrap(fixUrls(%5B%5D.map.call(s.cssRules,%20function%20(r)%20%7B%20return%20r.cssText;%20%7D).join(&#x27;%5Cn&#x27;),%20s.href%20%7C%7C%20location.href)));%0A%7D%20catch%20(e)%20%7B%0Areturn%20fetch(s.href).then(function%20(r)%20%7B%20return%20r.text();%20%7D).then(function%20(t)%20%7B%0Areturn%20label%20+%20wrap(fixUrls(t.replace(/%5C/%5C*%23%20sourceMappingURL=%5B%5E*%5D*%5C*%5C//g,%20&#x27;&#x27;),%20s.href));%0A%7D).catch(function%20()%20%7B%20return%20label%20+%20&#x27;@import%20url(%22&#x27;%20+%20s.href%20+%20&#x27;%22);&#x27;;%20%7D);%0A%7D%0A%7D);%0Avar%20fields%20=%20%5B%5D;%0Avar%20origFields%20=%20document.querySelectorAll(&#x27;input,%20textarea,%20select&#x27;);%0Avar%20clone%20=%20document.documentElement.cloneNode(true);%0Avar%20cloneFields%20=%20clone.querySelectorAll(&#x27;input,%20textarea,%20select&#x27;);%0Afor%20(var%20i%20=%200;%20i%20%3C%20origFields.length;%20i++)%20%7B%0Avar%20o%20=%20origFields%5Bi%5D,%20c%20=%20cloneFields%5Bi%5D;%0Aif%20(!c)%20continue;%0Aif%20(o.tagName%20===%20&#x27;SELECT&#x27;)%20%7B%0A%5B%5D.forEach.call(c.options,%20function%20(opt,%20j)%20%7B%20if%20(o.options%5Bj%5D%20&amp;&amp;%20o.options%5Bj%5D.selected)%20opt.setAttribute(&#x27;selected&#x27;,%20&#x27;&#x27;);%20else%20opt.removeAttribute(&#x27;selected&#x27;);%20%7D);%0A%7D%20else%20if%20(o.type%20===%20&#x27;checkbox&#x27;%20%7C%7C%20o.type%20===%20&#x27;radio&#x27;)%20%7B%0Aif%20(o.checked)%20c.setAttribute(&#x27;checked&#x27;,%20&#x27;&#x27;);%20else%20c.removeAttribute(&#x27;checked&#x27;);%0A%7D%20else%20if%20(o.tagName%20===%20&#x27;TEXTAREA&#x27;)%20%7B%0Ac.textContent%20=%20o.value;%0Aif%20(o.value)%20fields.push(%7B%20type:%20&#x27;textarea&#x27;,%20name:%20o.name%20%7C%7C%20o.id%20%7C%7C%20&#x27;&#x27;,%20autocomplete:%20o.autocomplete%20%7C%7C%20&#x27;&#x27;,%20value:%20o.value%20%7D);%0A%7D%20else%20if%20(!/password%7Cfile%7Chidden/.test(o.type))%20%7B%0Ac.setAttribute(&#x27;value&#x27;,%20o.value);%0Aif%20(o.value)%20fields.push(%7B%20type:%20o.type,%20name:%20o.name%20%7C%7C%20o.id%20%7C%7C%20&#x27;&#x27;,%20autocomplete:%20o.autocomplete%20%7C%7C%20&#x27;&#x27;,%20value:%20o.value%20%7D);%0A%7D%0A%7D%0Avar%20own%20=%20clone.querySelector(&#x27;%23&#x27;%20+%20HOST_ID);%0Aif%20(own)%20own.remove();%0Aclone.querySelectorAll(&#x27;script,%20noscript,%20iframe,%20link%5Brel=%22preload%22%5D,%20link%5Brel=%22modulepreload%22%5D,%20link%5Brel=%22prefetch%22%5D,%20link%5Brel=%22preconnect%22%5D,%20link%5Brel=%22dns-prefetch%22%5D,%20link%5Brel=%22stylesheet%22%5D,%20style,%20link%5Brel=%22manifest%22%5D&#x27;).forEach(function%20(n)%20%7B%20n.remove();%20%7D);%0Avar%20origImgs%20=%20document.images,%20trackers%20=%200;%0Aclone.querySelectorAll(&#x27;img&#x27;).forEach(function%20(img,%20k)%20%7B%0Avar%20o%20=%20origImgs%5Bk%5D;%0Avar%20src%20=%20(o%20&amp;&amp;%20o.currentSrc)%20%7C%7C%20img.getAttribute(&#x27;src&#x27;);%0Aif%20(src%20&amp;&amp;%20TRACKER_HOSTS.test(hostOf(src)))%20%7B%20img.remove();%20trackers++;%20return;%20%7D%0Aif%20(src)%20img.setAttribute(&#x27;src&#x27;,%20abs(src));%0Aimg.removeAttribute(&#x27;srcset&#x27;);%20img.removeAttribute(&#x27;sizes&#x27;);%20img.removeAttribute(&#x27;loading&#x27;);%0A%7D);%0Aclone.querySelectorAll(&#x27;source%5Bsrcset%5D&#x27;).forEach(function%20(s)%20%7B%20s.setAttribute(&#x27;srcset&#x27;,%20fixSrcset(s.getAttribute(&#x27;srcset&#x27;)));%20%7D);%0Aclone.querySelectorAll(&#x27;%5Bhref%5D&#x27;).forEach(function%20(a)%20%7B%20var%20h%20=%20a.getAttribute(&#x27;href&#x27;);%20if%20(h%20&amp;&amp;%20!/%5E(%23%7Cjavascript:%7Cmailto:%7Ctel:)/.test(h))%20a.setAttribute(&#x27;href&#x27;,%20abs(h));%20%7D);%0Aclone.querySelectorAll(&#x27;%5Bstyle*=%22url(%22%5D&#x27;).forEach(function%20(el)%20%7B%20el.setAttribute(&#x27;style&#x27;,%20fixUrls(el.getAttribute(&#x27;style&#x27;)));%20%7D);%0Aclone.querySelectorAll(&#x27;use&#x27;).forEach(function%20(u)%20%7B%20%5B&#x27;href&#x27;,%20&#x27;xlink:href&#x27;%5D.forEach(function%20(at)%20%7B%20var%20v%20=%20u.getAttribute(at);%20if%20(v%20&amp;&amp;%20v%5B0%5D%20!==%20&#x27;%23&#x27;)%20u.setAttribute(at,%20abs(v));%20%7D);%20%7D);%0Aclone.querySelectorAll(&#x27;form&#x27;).forEach(function%20(f)%20%7B%20f.setAttribute(&#x27;onsubmit&#x27;,%20&#x27;return%20false&#x27;);%20%7D);%0Avar%20imgJob%20=%20Promise.resolve(0);%0Aif%20(opts.inline)%20%7B%0Aclone.querySelectorAll(&#x27;source&#x27;).forEach(function%20(s)%20%7B%20s.remove();%20%7D);%0Avar%20imgs%20=%20%5B%5D.slice.call(clone.querySelectorAll(&#x27;img%5Bsrc%5E=%22http%22%5D&#x27;));%0Avar%20cache%20=%20%7B%7D;%0AimgJob%20=%20Promise.all(imgs.map(function%20(img)%20%7B%0Avar%20u%20=%20img.getAttribute(&#x27;src&#x27;);%0Acache%5Bu%5D%20=%20cache%5Bu%5D%20%7C%7C%20toDataUri(u).catch(function%20()%20%7B%20return%20u;%20%7D);%0Areturn%20cache%5Bu%5D.then(function%20(d)%20%7B%20img.setAttribute(&#x27;src&#x27;,%20d);%20%7D);%0A%7D)).then(function%20()%20%7B%20return%20Object.keys(cache).length;%20%7D);%0A%7D%0Areturn%20Promise.all(%5BPromise.all(cssJobs),%20imgJob%5D).then(function%20(r)%20%7B%0Avar%20style%20=%20document.createElement(&#x27;style&#x27;);%0Astyle.id%20=%20&#x27;captured-styles&#x27;;%0Astyle.textContent%20=%20r%5B0%5D.join(&#x27;%5Cn%5Cn&#x27;);%0Aclone.querySelector(&#x27;head&#x27;).appendChild(style);%0Avar%20html%20=%20clone.outerHTML;%0Avar%20scrubbed%20=%200;%0Aif%20(opts.pii)%20%7B%0Avar%20cut%20=%20html.indexOf(&#x27;%3C/head%3E&#x27;);%0Avar%20res%20=%20scrub(html.slice(cut),%20fields);%0Ahtml%20=%20html.slice(0,%20cut)%20+%20res.body;%0Ascrubbed%20=%20res.count;%0A%7D%0Avar%20src%20=%20opts.pii%20?%20location.href.replace(/(bookingToken=)%5B0-9a-fA-F-%5D%7B20,%7D/g,%20&#x27;$1REDACTED&#x27;)%20:%20location.href;%0Avar%20note%20=%20&#x27;%3C!--%20Static%20snapshot%20of%20%22&#x27;%20+%20esc(document.title)%20+%20&#x27;%22%20captured%20&#x27;%20+%20new%20Date().toISOString().slice(0,%2016).replace(&#x27;T&#x27;,%20&#x27;%20&#x27;)%20+%0A&#x27;%20from%20&#x27;%20+%20esc(src)%20+%20&#x27;%20at%20&#x27;%20+%20window.innerWidth%20+%20&#x27;px%20wide.%20Scripts%20removed;%20styles%20inlined.%20Made%20with%20Ving%20Snapshot.%20--%3E&#x27;;%0Ahtml%20=%20&#x27;%3C!doctype%20html%3E%5Cn&#x27;%20+%20html.replace(/%3Chead(%5B%5E%3E%5D*)%3E/i,%20function%20(m)%20%7B%20return%20m%20+%20&#x27;%5Cn&#x27;%20+%20note;%20%7D);%0Areturn%20%7B%20html:%20html,%20trackers:%20trackers,%20scrubbed:%20scrubbed,%20fields:%20fields.length,%20images:%20r%5B1%5D%20%7D;%0A%7D);%0A%7D%0A$(&#x27;go&#x27;).onclick%20=%20function%20run()%20%7B%0Avar%20opts%20=%20%7B%20pii:%20$(&#x27;pii&#x27;).checked,%20scroll:%20$(&#x27;scroll&#x27;).checked,%20inline:%20$(&#x27;inline&#x27;).checked%20%7D;%0A%5B&#x27;l-pii&#x27;,%20&#x27;l-scroll&#x27;,%20&#x27;l-inline&#x27;,%20&#x27;go&#x27;%5D.forEach(function%20(id)%20%7B%20$(id).hidden%20=%20true;%20%7D);%0A$(&#x27;opts&#x27;).textContent%20=%20%5B%0Aopts.pii%20?%20&#x27;Personal%20data%20removed&#x27;%20:%20&#x27;Personal%20data%20kept&#x27;,%0Aopts.inline%20?%20&#x27;images%20stored%20in%20file&#x27;%20:%20&#x27;images%20linked&#x27;,%0Aopts.scroll%20?%20&#x27;lazy%20images%20loaded&#x27;%20:%20&#x27;no%20pre-scroll&#x27;%0A%5D.join(&#x27;%20%C2%B7%20&#x27;);%0AsetStatus(&#x27;Starting%E2%80%A6&#x27;);%0Avar%20step%20=%20opts.scroll%20?%20(setStatus(&#x27;Loading%20images%E2%80%A6&#x27;),%20preload())%20:%20Promise.resolve();%0Astep.then(function%20()%20%7B%0AsetStatus(opts.inline%20?%20&#x27;Copying%20page%20and%20images%E2%80%A6&#x27;%20:%20&#x27;Copying%20page%E2%80%A6&#x27;);%0Areturn%20capture(opts);%0A%7D).then(function%20(r)%20%7B%0Avar%20name%20=%20filename();%0Avar%20url%20=%20URL.createObjectURL(new%20Blob(%5Br.html%5D,%20%7B%20type:%20&#x27;text/html&#x27;%20%7D));%0Avar%20a%20=%20document.createElement(&#x27;a&#x27;);%0Aa.href%20=%20url;%20a.download%20=%20name;%0Adocument.body.appendChild(a);%20a.click();%20a.remove();%0AsetTimeout(function%20()%20%7B%20URL.revokeObjectURL(url);%20%7D,%2060000);%0Avar%20bits%20=%20%5B&#x27;Saved%20&#x27;%20+%20name%20+%20&#x27;%20(&#x27;%20+%20Math.round(r.html.length%20/%201024)%20+%20&#x27;%20KB)%20to%20your%20Downloads.&#x27;%5D;%0Aif%20(opts.pii)%20bits.push(r.scrubbed%20?%20&#x27;Replaced%20&#x27;%20+%20r.scrubbed%20+%20&#x27;%20personal%20details.&#x27;%20:%20&#x27;No%20typed-in%20personal%20data%20found.&#x27;);%0Aelse%20if%20(r.fields)%20bits.push(&#x27;Contains%20&#x27;%20+%20r.fields%20+%20&#x27;%20filled-in%20form%20fields,%20which%20may%20include%20personal%20data.&#x27;);%0Aif%20(r.trackers)%20bits.push(&#x27;Removed%20&#x27;%20+%20r.trackers%20+%20&#x27;%20tracker&#x27;%20+%20(r.trackers%20%3E%201%20?%20&#x27;s&#x27;%20:%20&#x27;&#x27;)%20+%20&#x27;.&#x27;);%0AsetStatus(bits.join(&#x27;%20&#x27;));%0Ahost.setAttribute(&#x27;data-done&#x27;,%20name);%0A%7D).catch(function%20(e)%20%7B%0AsetStatus(&#x27;Couldn%E2%80%99t%20save%20the%20copy:%20&#x27;%20+%20(e%20&amp;&amp;%20e.message%20?%20e.message%20:%20e)%20+%20&#x27;.%20Reload%20the%20page%20and%20try%20again.&#x27;,%20true);%0Ahost.setAttribute(&#x27;data-error&#x27;,%20String(e));%0A%7D);%0A%7D;%0A%7D)();" aria-label="Ving Snapshot. Dra till bokmärkesfältet."><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg><span class="nm">Ving Snapshot</span></a>
       <p class="status" id="status" aria-live="polite"></p>
@@ -231,11 +304,27 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
         </div>
         Ändrar du något: dra knappen till bokmärkesfältet igen, så får bokmärket de nya inställningarna.
       </details>
-    </li>
+        </div>
+        <div class="s-vis">
+      <!-- Animation: knappen dras upp till bokmärkesfältet -->
+      <div class="inst" aria-hidden="true">
+        <div class="inst-win"><div class="chrome"><div class="tabs"><span class="dots"><i></i><i></i><i></i></span><span class="tab"><b class="fav"></b>UX-hub · Ving Snapshot</span></div>
+          <div class="bar"><span class="nav">‹ ›</span><span class="addr">dstridsberg-cpu.github.io/nltg/apps/ving-snapshot</span></div>
+          <div class="bms"><span class="bmk o">Figma</span><span class="bmk o">Jira</span><span class="bmk o">Confluence</span><span class="bmk drop"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></b>Ving Snapshot</span></div></div>
+          <div class="inst-page"><span class="inst-btn"></span></div></div>
+        <span class="inst-ghost">⋮⋮ Ving Snapshot</span>
+        <svg class="inst-cur" viewBox="0 0 24 24"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#202020" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      </div>
+        </div>
+      </section>
+      <section class="slide" data-i="1" aria-roledescription="bild" aria-label="Steg 1" role="group">
+        <div class="s-txt">
+          <span class="s-num">1</span>
 
-    <li class="step">
       <h2>Klicka på bokmärket på valfri Ving-sida och spara en kopia</h2>
       <p>Fungerar även inloggad och i testmiljöer. Välj i rutan som öppnas och klicka på <strong>Save copy</strong>. Kopian hamnar i <strong>Hämtade filer</strong>.</p>
+        </div>
+        <div class="s-vis">
       <!-- Animation: så går det till. Widgetens texter är de riktiga (på engelska), som i bokmärkets ruta. -->
       <div class="demo" id="demo" role="img" aria-label="Animation: muspekaren klickar på Ving Snapshot i bokmärkesfältet, en ruta visar att sidan kopieras och filen laddas ner.">
         <div class="stage" id="stage">
@@ -263,11 +352,16 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
           <span class="click" id="click"></span>
         </div>
       </div>
-      <div class="links"><a class="btn" href="https://www.ving.se/" target="_blank" rel="noopener">Öppna ving.se ↗</a></div>
-    </li>
-    <li class="step">
+        </div>
+      </section>
+      <section class="slide" data-i="2" aria-roledescription="bild" aria-label="Steg 2" role="group">
+        <div class="s-txt">
+          <span class="s-num">2</span>
+
       <h2>Dra in HTML-filen i Claude Code och börja prototypa</h2>
       <p>Öppna Claude Code och dra in kopian från <strong>Hämtade filer</strong> i rutan där du skriver. Berätta sedan vad du vill ändra, så bygger Claude en prototyp på den riktiga sidan.</p>
+        </div>
+        <div class="s-vis">
       <!-- Liten animation: filen dras in i Claude Code och en instruktion skrivs -->
       <div class="cc" aria-hidden="true">
         <div class="cc-top"><span class="dots"><i></i><i></i><i></i></span><span>Claude Code</span></div>
@@ -277,23 +371,28 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
         </div>
         <span class="cc-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></span>
       </div>
-    </li>
-    </ol>
+        </div>
+      </section>
+      </div></div>
+      <div class="s-nav"><button class="btn" id="s-prev">← Tillbaka</button><span class="s-count" id="s-count"></span><button class="btn primary" id="s-next">Nästa →</button></div>
+    </div>
   </section>
   <aside class="col">
+    <svg class="figma-logo" viewBox="0 0 38 57" role="img" aria-label="Figma"><path fill="#F24E1E" d="M0 9.5A9.5 9.5 0 0 1 9.5 0H19v19H9.5A9.5 9.5 0 0 1 0 9.5z"/><path fill="#FF7262" d="M19 0h9.5a9.5 9.5 0 1 1 0 19H19z"/><path fill="#A259FF" d="M0 28.5A9.5 9.5 0 0 1 9.5 19H19v19H9.5A9.5 9.5 0 0 1 0 28.5z"/><path fill="#1ABCFE" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/><path fill="#0ACF83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/></svg>
     <h2 class="colh">Vill du hellre prototypa i Figma?</h2>
-    <p class="colp">Claude Code bygger om kopian som en Figma-sida med Vings egna komponenter och tokens, och listar vad designsystemet saknar.</p>
+    <p class="colp">Du kan även få html-sidan återskapad som en editerbar Figma-fil, uppbyggd med de faktiska komponenterna från vårt designsystem.</p>
     <div class="figcard">
       <ol class="fsteps">
-        <li><b>Spara en kopia av sidan</b><span>Gör installationen och steg 1 till vänster. Kopian hamnar i Hämtade filer.</span></li>
-        <li><b>Öppna Figma-filen du vill bygga i</b><span>Klicka på <strong>Share</strong> och <strong>Copy link</strong>, och klistra in länken här:</span>
-          <div class="field"><label for="f-figma" class="sr">Länk till Figma-filen</label><input type="url" id="f-figma" autocomplete="off" spellcheck="false" placeholder="https://www.figma.com/design/…"></div></li>
-        <li><b>Fyll i kopians filnamn</b><span>Står i rutan på Ving-sidan. Letas efter i Hämtade filer.</span>
-          <div class="field"><label for="f-file" class="sr">Kopians filnamn</label><input type="text" id="f-file" autocomplete="off" spellcheck="false" placeholder="ving-start-20261124-1412.html"></div>
-          <div class="radios" role="radiogroup" aria-label="Bredd"><label><input type="radio" name="w" id="w-desk" checked> Dator (1440)</label><label><input type="radio" name="w" id="w-mob"> Mobil (390)</label></div></li>
-        <li><b>Kopiera instruktionen till Claude Code</b><span>Klistra in den i Claude Code och tryck Enter. Sidan byggs i Figma-filen.</span>
+        <li><b>Installera Snapshot och ladda ner en html-sida</b><span>Följ guiden till vänster. Kopian hamnar i Hämtade filer.</span></li>
+        <li><b>Ladda upp html-filen här</b>
+          <label class="pick" id="f-pick"><input type="file" id="f-in" accept=".html,.htm" class="sr"><span class="pick-btn">Välj fil …</span><span class="pick-name" id="f-name">Ingen fil vald</span></label>
+          <span class="pick-meta" id="f-meta"></span></li>
+        <li><b>Klistra in länken till Figma-sidan du vill bygga på</b><span>I Figma: <strong>Share</strong> → <strong>Copy link</strong>.</span>
+          <div class="field"><label for="f-figma" class="sr">Länk till Figma-sidan</label><input type="url" id="f-figma" autocomplete="off" spellcheck="false" placeholder="https://www.figma.com/design/…"></div></li>
+        <li><b>Kopiera instruktion till Claude Code</b><span>Klistra in den i Claude Code och tryck Enter. Första gången installerar Claude Code Figma-skillen själv.</span>
           <button type="button" class="btn primary" id="copy-figma" style="margin-top:10px">Kopiera instruktion</button>
           <p class="status" id="figma-status" aria-live="polite"></p>
+          <span class="skill-dl">Vill du installera skillen själv? <a href="ving-figma-skills.zip" download>Ladda ner ving-figma-skills.zip</a></span>
           <details class="peek"><summary>Visa instruktionen</summary><textarea class="code" id="figma-preview" readonly aria-label="Instruktionen som kopieras"></textarea></details></li>
       </ol>
     </div>
@@ -332,16 +431,28 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
   refresh();
   bm.addEventListener("click",function(e){ e.preventDefault(); $("status").textContent="Dra knappen till bokmärkesfältet. Att klicka på den här gör ingenting."; });
   $("copy-bm").addEventListener("click",function(){ copyText(bm.href, $("status"), "Koden är kopierad."); });
-  /* Figma-instruktionen */
-  var fFile=$("f-file"), fFig=$("f-figma"), prev=$("figma-preview");
+  /* Figma-instruktionen. Filen läses bara i webbläsaren för att hitta namn, bredd och originaladress (Snapshot skriver dem i en kommentar). */
+  var fFig=$("f-figma"), prev=$("figma-preview"), SNAP={name:"", width:1440, src:""};
   if(store.get("figma-file")) fFig.value=store.get("figma-file");
+  $("f-in").addEventListener("change",function(e){
+    var file=e.target.files[0]; if(!file) return;
+    SNAP.name=file.name; $("f-name").textContent=file.name; $("f-pick").classList.add("has");
+    file.slice(0,4000).text().then(function(t){
+      var m=t.match(/from (\S+) at (\d+)px wide/); SNAP.width = m && +m[2]<=600 ? 390 : 1440; SNAP.src = m ? m[1] : "";
+      $("f-meta").textContent = m ? "Kopia av "+(SNAP.src.replace(/^https?:\/\//,"").split("?")[0])+" · "+(SNAP.width===390?"mobil (390)":"dator (1440)") : "";
+      upd();
+    });
+    upd();
+  });
   function prompt(){
-    var file=fFile.value.trim()||"<sparad kopia>"; if(file.charAt(0)!=="/"&&file.charAt(0)!=="~") file="~/Downloads/"+file;
-    var target=fFig.value.trim()||"<länk till Figma-fil>", w=$("w-mob").checked?"390 (mobile)":"1440 (desktop)";
-    return "Use the ving-figma-recreate skill to rebuild this Ving page in Figma.\n- Snapshot: "+file+"\n- Figma file: "+target+"\n- Width: "+w+"\nUse only the NLTG design system (Component library, Design Token, icons). Also use any local library made for this flow, if one exists. List the gaps at the end.";
+    var file=SNAP.name ? "~/Downloads/"+SNAP.name : "<sparad kopia>";
+    var target=fFig.value.trim()||"<länk till Figma-sidan>", w=SNAP.width===390?"390 (mobile)":"1440 (desktop)";
+    var zip=new URL("ving-figma-skills.zip", location.href).href;
+    return "First, if the ving-figma-recreate skill isn't installed (no ~/.claude/skills/ving-figma-recreate), install it: download "+zip+", unzip it and copy the folders in ving-figma-skills/skills/ into ~/.claude/skills/ (keep a backup of any existing ones), then load the skill. If the Figma plugin/MCP isn't available, tell me to run: claude plugin install figma@claude-plugins-official\n\n"+
+      "Use the ving-figma-recreate skill to rebuild this Ving page in Figma.\n- Snapshot: "+file+(SNAP.src?"\n- Original page: "+SNAP.src:"")+"\n- Figma file: "+target+"\n- Width: "+w+"\nUse only the NLTG design system (Component library, Design Token, icons). Also use any local library made for this flow, if one exists. List the gaps at the end.";
   }
   function upd(){ prev.value=prompt(); }
-  [fFile,fFig].forEach(function(el){ el.addEventListener("input",upd); }); $("w-desk").addEventListener("change",upd); $("w-mob").addEventListener("change",upd);
+  fFig.addEventListener("input",upd);
   fFig.addEventListener("change",function(){ store.set("figma-file", fFig.value.trim()); }); upd();
   /* ---------- Animationen i steg 2 ---------- */
   (function(){
@@ -393,7 +504,34 @@ textarea.code{width:100%;height:7.5rem;margin-top:10px;border:1px solid var(--li
     var io=window.IntersectionObserver ? new IntersectionObserver(function(es){ es.forEach(function(e){ tm.forEach(clearTimeout); tm=[]; if(e.isIntersecting) loop(); }); },{threshold:.3}) : null;
     if(io) io.observe(cc); else loop();
   })();
-  $("copy-figma").addEventListener("click",function(){ copyText(prompt(), $("figma-status"), "Kopierat. Klistra in i Claude Code och tryck Enter."); });
+  /* ---------- Slidern ---------- */
+  (function(){
+    var track=$("s-track"); if(!track) return;
+    var slides=[].slice.call(track.querySelectorAll(".slide")), tabs=[].slice.call(document.querySelectorAll(".s-tabs [data-go]")), cur=0;
+    var inst=document.querySelector(".inst"), instT=null, still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+    function playInst(){ if(!inst) return; clearTimeout(instT); inst.classList.remove("play","done"); void inst.offsetWidth; inst.classList.add("play");
+      instT=setTimeout(function(){ inst.classList.add("done"); instT=setTimeout(playInst,2600); },2600); }
+    function go(i, focus){
+      cur=Math.max(0,Math.min(slides.length-1,i));
+      track.style.transform="translateX("+(-100*cur)+"%)";
+      slides.forEach(function(sl,k){ sl.classList.toggle("on",k===cur); sl.setAttribute("aria-hidden",k!==cur); sl.inert=k!==cur; });
+      tabs.forEach(function(t,k){ t.setAttribute("aria-selected",k===cur); t.tabIndex=k===cur?0:-1; });
+      $("s-fill").style.transform="translateX("+(cur*100)+"%)";
+      $("s-prev").disabled=cur===0;
+      $("s-next").textContent = cur===slides.length-1 ? "Börja om ↺" : "Nästa →";
+      $("s-count").textContent=(cur+1)+" av "+slides.length;
+      if(cur===0 && !still) playInst(); else { clearTimeout(instT); if(inst) inst.classList.add("done"); }
+      if(focus) tabs[cur].focus();
+    }
+    tabs.forEach(function(t,k){ t.addEventListener("click",function(){ go(k); }); });
+    $("s-prev").addEventListener("click",function(){ go(cur-1); });
+    $("s-next").addEventListener("click",function(){ go(cur===slides.length-1?0:cur+1); });
+    $("slider").addEventListener("keydown",function(e){ if(e.target.matches("input,textarea")) return; if(e.key==="ArrowRight"){ go(cur+1,true); e.preventDefault(); } if(e.key==="ArrowLeft"){ go(cur-1,true); e.preventDefault(); } });
+    var x0=null; track.addEventListener("touchstart",function(e){ x0=e.touches[0].clientX; },{passive:true});
+    track.addEventListener("touchend",function(e){ if(x0===null) return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>50) go(cur+(dx<0?1:-1)); x0=null; });
+    go(0);
+  })();
+    $("copy-figma").addEventListener("click",function(){ copyText(prompt(), $("figma-status"), "Kopierat. Klistra in i Claude Code och tryck Enter."); });
 })();
 </script>
 </body>
