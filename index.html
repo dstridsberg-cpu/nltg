@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="pp-app" content="2026-11-24T10:27">
+<meta name="pp-app" content="2026-11-24T14:21">
 <title>UX-hub beta</title>
 <!--
   Prototyp-publiceraren: publicera html-prototyper som lösenordsskyddade länkar på GitHub Pages.
@@ -105,6 +105,8 @@ code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2efea;pa
 .proj .pc{padding:16px 24px;display:flex;flex-direction:column;gap:6px}
 .proj .t{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;font:700 19px/1.1 var(--head);color:var(--text)}
 .proj .t svg{flex:none}
+.proj .t .app-ic{width:30px;height:30px;flex:none;margin-right:-2px}
+.proj .t .app-ic+span{flex:1}
 .proj .t:hover span{text-decoration:underline}
 .proj .u{font-size:14px;color:var(--subtle)}
 /* Navigering, inloggad användare, avatarer */
@@ -639,7 +641,7 @@ function profile(login){
   return PROFILES.get(login);
 }
 const avImg = (p, cls="") => p.avatar ? `<img class="av ${cls}" src="${esc(p.avatar)}${p.avatar.includes("?")?"&":"?"}s=112" alt="">` : `<span class="av ${cls}"></span>`;
-async function byLine(el, login, prefix){ if(!login){ el.textContent=""; return; } const p=await profile(login); el.innerHTML=`${avImg(p,"s")}<span>${esc(prefix)} ${esc(p.name)}</span>`; }
+async function byLine(el, login, prefix){ if(!login){ el.textContent=""; return; } const p=await profile(login); el.innerHTML=`${avImg(p,"s")}<span>${prefix?esc(prefix)+" ":""}${esc(p.name)}</span>`; el.title=(prefix||"Skapad av")+" "+p.name; }
 const member = login => TEAM?.members.find(m=>m.login.toLowerCase()===String(login).toLowerCase());
 const isAdmin = () => member(ME?.login)?.role==="admin";
 const isMember = () => !!member(ME?.login);
@@ -961,8 +963,8 @@ async function showList(){
       el.querySelector('[data-act="set"]').onclick=e=>openSettings(slug, e.currentTarget);
       el.querySelector('[data-act="update"]')?.addEventListener("click",()=>openPublish(slug));
       el.querySelector('[data-act="del"]')?.addEventListener("click",()=>removeProject(slug));
-      if(INFO[slug]) byLine(el.querySelector(".js-by"), INFO[slug].createdBy, "Skapad av");
-      else backfillInfo(slug).then(()=>byLine(el.querySelector(".js-by"), INFO[slug]?.createdBy, "Skapad av"));
+      if(INFO[slug]) byLine(el.querySelector(".js-by"), INFO[slug].createdBy, "");
+      else backfillInfo(slug).then(()=>byLine(el.querySelector(".js-by"), INFO[slug]?.createdBy, ""));
       el.querySelector('[data-act="hist"]').onclick=e=>openHistory(slug, e.currentTarget);
       const p=TREE.find(x=>x.slug===slug), th=el.querySelector(".th");
       if(meta[slug]?.pw){ if(p.thumb) showThumb(th, slug, p.thumb, meta[slug].pw); else backfillThumb(th, slug, meta[slug].pw); }
@@ -1005,7 +1007,7 @@ async function renderApps(){
         </div>
       </div>
       <div class="pc">
-        <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna appen"><span>${name}</span>${CHEV}</a>
+        <a class="t" href="${url}" target="_blank" rel="noopener" title="Öppna appen">${i.icon?`<img class="app-ic" src="${esc(i.icon)}" alt="">`:""}<span>${name}</span>${CHEV}</a>
         ${i.description?`<div class="u" style="color:var(--text);font-size:15px">${esc(i.description)}</div>`:""}
         <div class="by js-by">&nbsp;</div>
       </div></article>`; }).join("");
@@ -1015,7 +1017,7 @@ async function renderApps(){
     el.querySelector('[data-act="set"]').onclick=e=>openAppSettings(slug, e.currentTarget);
     el.querySelector('[data-act="update"]')?.addEventListener("click",()=>openPublish(slug,"app"));
     el.querySelector('[data-act="del"]')?.addEventListener("click",()=>removeApp(slug));
-    if(i.createdBy) byLine(el.querySelector(".js-by"), i.createdBy, "Tillagd av"); else el.querySelector(".js-by").textContent="";
+    if(i.createdBy) byLine(el.querySelector(".js-by"), i.createdBy, ""); else el.querySelector(".js-by").textContent="";
   });
   stagger(box);
 }
@@ -1496,7 +1498,10 @@ new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==="attributes
   for(const p of pages) out[p]=await page(p);
   // Appar: varje sida bakas för sig och publiceras som egen fil (länkar mellan sidorna fungerar som vanligt)
   if(opts.separate){ const title=(out[pages[0]].match(/<title>([^<]*)<\/title>/i)||[])[1]||"";
-    return {separate:out, first:out[pages[0]], pages, used:[...used], missing:[...missing], external:[...external], extDone:[...extDone], dynCount, dynPrefixes:[...coveredPrefixes], title:title.trim(), html:out[pages[0]]}; }
+    const ATTACH=/\.(zip|pdf|txt|csv|json|sh|dmg|pkg)$/i, attach=new Set();
+    for(const [p,h] of Object.entries(out)) for(const [,u] of h.matchAll(/(?<![\w-])href=["']([^"'<>#?]+)["']/gi)){
+      if(!isLocal(u)) continue; const fp=norm(dirOf(p)+u); if(byPath.has(fp) && ATTACH.test(fp)) attach.add(fp); }
+    return {separate:out, attach:[...attach].map(p=>({path:p, file:byPath.get(p)})), first:out[pages[0]], pages, used:[...used], missing:[...missing], external:[...external], extDone:[...extDone], dynCount, dynPrefixes:[...coveredPrefixes], title:title.trim(), html:out[pages[0]]}; }
   let html;
   if(pages.length===1) html=out[pages[0]];
   else{
@@ -1593,6 +1598,7 @@ async function useFiles(files, rootName){
     const kb=n=>n>1e6?(n/1e6).toFixed(1)+" MB":Math.round(n/1e3)+" kB";
     pk.innerHTML = `<span class="ok">✓ ${b.pages.length===1?`1 sida: ${esc(b.pages[0])}`:`${b.pages.length} sidor: ${b.pages.map(esc).join(", ")}`}</span>
       <span class="ok">✓ ${b.used.length} filer bakas in (bilder, typsnitt, skript), totalt ${kb(new Blob([b.html]).size)}</span>
+      ${b.attach?.length?`<span class="ok">✓ Filer att ladda ner följer med: ${b.attach.map(a=>esc(a.path)).join(", ")}</span>`:""}
       ${b.dynCount?`<span class="ok">✓ ${b.dynCount} bilder som koden visar (${b.dynPrefixes.map(esc).join(", ")}) är med</span>`:""}
       ${b.extDone.length?`<span class="ok">✓ Typsnitt och bilder från ${b.extDone.map(esc).join(", ")} är inbakade</span>`:""}
       ${b.missing.length?`<span class="warn">⚠ Hittades inte i mappen: ${b.missing.slice(0,6).map(esc).join(", ")}${b.missing.length>6?" …":""}</span>`:""}
@@ -1623,7 +1629,11 @@ async function publishApp(){
       const h = p===SRC.pages[0] ? html.replace(/<head[^>]*>/i, m=>m+`<meta name="pp-build" content="${stamp}">`) : html;
       files.push({path:`apps/${slug}/${p.split("/").pop()}`, b64:utf8b64(h)}); }
     const info={name, description:$("#f-desc").value.trim(), createdBy:cur.createdBy||ME.login, createdAt:cur.createdAt||now, updatedBy:ME.login, updatedAt:now, start:SRC.pages[0].split("/").pop()};
+    // Appens ikon: sidans flikikon (<link rel="icon">), inbakad som data-adress
+    const ic=(SRC.first.match(/<link\b(?=[^>]*\brel=["'](?:shortcut )?icon["'])[^>]*\bhref=["'](data:image\/[^"']+)["']/i)||[])[1];
+    if(ic && ic.length<40000) info.icon=ic;
     files.push({path:`apps/${slug}/info.json`, b64:utf8b64(JSON.stringify(info,null,2)+"\n")});
+    for(const a of (SRC.attach||[])) files.push({path:`apps/${slug}/${a.path}`, b64:b64(new Uint8Array(await a.file.arrayBuffer()))});   // nedladdningsbara filer som sidan länkar till
     if(THUMB_P) await THUMB_P; if(THUMB) files.push({path:`apps/${slug}/tumnagel.jpg`, b64:b64(new Uint8Array(await THUMB.arrayBuffer()))});
     // Ett startdokument som heter index.html behövs för att länken ska bli bara mappens adress
     if(!files.some(f=>f.path===`apps/${slug}/index.html`)) files.push({path:`apps/${slug}/index.html`, b64:utf8b64(`<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${encodeURI(info.start)}"><title>${esc(name)}</title>`)});
