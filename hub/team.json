@@ -31,6 +31,10 @@
     {
       "id": "discovery",
       "name": "Discovery"
+    },
+    {
+      "id": "innovation",
+      "name": "Innovation"
     }
   ]
 }
