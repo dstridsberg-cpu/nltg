@@ -6,7 +6,7 @@ var SCOPE=self.registration.scope, APP=SCOPE+"app/", APP_PATH=new URL(APP).pathn
 self.addEventListener("install",function(){self.skipWaiting()});
 self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim())});
 self.addEventListener("fetch",function(e){var u=new URL(e.request.url);if(e.request.method!=="GET"||u.href.indexOf(APP)!==0)return;e.respondWith(handle(e.request,u))});
-function login(rel){return Response.redirect(SCOPE+"?next="+encodeURIComponent(rel),302)}
+function login(rel){return Response.redirect(SCOPE+"?next="+encodeURIComponent(rel)+"&t="+Date.now(),302)}
 var TYPES={"png":"image/png","jpg":"image/jpeg","jpeg":"image/jpeg","gif":"image/gif","webp":"image/webp","svg":"image/svg+xml","ico":"image/x-icon","woff2":"font/woff2","woff":"font/woff","ttf":"font/ttf","otf":"font/otf","mp4":"video/mp4","webm":"video/webm","mp3":"audio/mpeg","wav":"audio/wav","json":"application/json","css":"text/css","js":"text/javascript","pdf":"application/pdf","html":"text/html","htm":"text/html","txt":"text/plain","xml":"application/xml","mjs":"text/javascript","avif":"image/avif","m4a":"audio/mp4","glb":"model/gltf-binary","gltf":"model/gltf+json"};
 async function handle(req,u){
   var rel=decodeURIComponent(u.pathname.slice(APP_PATH.length)), nav=req.mode==="navigate";
