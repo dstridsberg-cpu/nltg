@@ -10,13 +10,13 @@ function login(rel,why){return Response.redirect(SCOPE+"?next="+encodeURICompone
 var TYPES={"png":"image/png","jpg":"image/jpeg","jpeg":"image/jpeg","gif":"image/gif","webp":"image/webp","svg":"image/svg+xml","ico":"image/x-icon","woff2":"font/woff2","woff":"font/woff","ttf":"font/ttf","otf":"font/otf","mp4":"video/mp4","webm":"video/webm","mp3":"audio/mpeg","wav":"audio/wav","json":"application/json","css":"text/css","js":"text/javascript","pdf":"application/pdf","html":"text/html","htm":"text/html","txt":"text/plain","xml":"application/xml","mjs":"text/javascript","avif":"image/avif","m4a":"audio/mp4","glb":"model/gltf-binary","gltf":"model/gltf+json"};
 async function handle(req,u){
   var rel=decodeURIComponent(u.pathname.slice(APP_PATH.length)), nav=req.mode==="navigate";
-  if(nav||!REC){try{REC=await idbGet(SCOPE)}catch(e){REC=null}}
+  if(nav||!REC){try{REC=await idbGet(SCOPE);if(REC&&REC.raw)REC.key=await crypto.subtle.importKey("raw",REC.raw,"AES-GCM",false,["decrypt"]);else REC=null}catch(e){REC=null}}
   if(!REC)return nav?login(rel+u.search,"nyckel"):new Response("",{status:401});
   if(rel===""||/\/$/.test(rel))rel+=rel===""?REC.m.start:"index.html";
   // Har en ny version publicerats? Då låser lösenordssidan upp den (automatiskt om lösenordet är detsamma)
   // Versionskollen: Safari på iPhone startar om service workern ofta (då nollställs CHECKED), så tiden för senaste
   // omdirigering sparas också i IndexedDB – högst en omdirigering per minut, annars kan det bli en loop.
-  if(nav&&Date.now()-CHECKED>20000&&!(REC.bounced&&Date.now()-REC.bounced<60000)){CHECKED=Date.now();try{var t=await(await fetch(SCOPE+"index.html?v="+Date.now(),{cache:"no-store"})).text();var v=(t.match(/name="pp-build" content="([^"]+)"/)||[])[1];if(v&&v!==REC.v){REC.bounced=Date.now();try{await idbPut(SCOPE,REC)}catch(e){}return login(rel+u.search,"version")}}catch(e){}}
+  if(nav&&Date.now()-CHECKED>20000&&!(REC.bounced&&Date.now()-REC.bounced<60000)){CHECKED=Date.now();try{var t=await(await fetch(SCOPE+"index.html?v="+Date.now(),{cache:"no-store"})).text();var v=(t.match(/name="pp-build" content="([^"]+)"/)||[])[1];if(v&&v!==REC.v){REC.bounced=Date.now();try{await idbPut(SCOPE,{raw:REC.raw,m:REC.m,v:REC.v,bounced:REC.bounced})}catch(e){}return login(rel+u.search,"version")}}catch(e){}}
   var f=REC.m.files[rel];
   if(!f)return new Response("Filen finns inte i prototypen: "+rel,{status:404,headers:{"Content-Type":"text/plain; charset=utf-8"}});
   var plain=MEM.get(f.id);
